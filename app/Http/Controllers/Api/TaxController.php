@@ -29,6 +29,16 @@ class TaxController extends Controller
         return TaxResource::collection($taxes);
     }
 
+    /**
+     * Taxes for selection inputs.
+     */
+    public function options(Request $request): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->taxes->options($request->query('company_id')),
+        ]);
+    }
+
     public function store(StoreTaxRequest $request): JsonResponse
     {
         $tax = $this->service->create($request->validated());

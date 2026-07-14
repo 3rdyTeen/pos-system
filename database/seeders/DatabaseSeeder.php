@@ -29,23 +29,27 @@ class DatabaseSeeder extends Seeder
         // Editor: only the Inventory module with view access (demonstrates gating).
         $this->grant($roles['editor'], $modules['inventory'], [$permissions['view']]);
 
-        // System Settings modules (registered by migration) are available to every
-        // role. Granted here too because migrations run before roles exist, so the
-        // migration's own grant is a no-op on a fresh install.
-        $this->grantSettingsToAllRoles($permissions);
+        // Modules registered by later data-migrations (System Settings, Catalog) are
+        // available to every role. Granted here too because migrations run before
+        // roles exist, so the migrations' own grant is a no-op on a fresh install.
+        $this->grantMigratedModulesToAllRoles($permissions);
 
         $this->seedUsers($roles['admin'], $roles['editor']);
     }
 
     /**
-     * Grant every role full access to the System Settings modules.
+     * Grant every role full access to the modules registered by data-migrations
+     * (System Settings + Catalog groups).
      *
      * @param  array<string, Permission>  $permissions
      */
-    private function grantSettingsToAllRoles(array $permissions): void
+    private function grantMigratedModulesToAllRoles(array $permissions): void
     {
         $modules = Module::query()
-            ->whereIn('code', ['system_settings', 'taxes', 'units', 'payment_methods', 'currencies'])
+            ->whereIn('code', [
+                'system_settings', 'taxes', 'units', 'payment_methods', 'currencies',
+                'catalog', 'products', 'product_categories',
+            ])
             ->get();
 
         foreach (Role::all() as $role) {

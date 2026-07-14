@@ -390,3 +390,114 @@ export interface PaymentMethodFilters {
     direction: SortDirection;
     page: number;
 }
+
+/** Minimal tax reference used by selection inputs (e.g. the product tax dropdown). */
+export interface TaxOption {
+    id: string;
+    name: string;
+    rate: string;
+    company_id: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Catalog: Products, Product Categories                                      */
+/* -------------------------------------------------------------------------- */
+
+export type ProductCategoryStatus = 'active' | 'inactive';
+
+export interface ProductCategory {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    parent_id: string | null;
+    parent?: { id: string; name: string } | null;
+    name: string;
+    slug: string | null;
+    description: string | null;
+    image_url: string | null;
+    status: ProductCategoryStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+/** Minimal category reference used by selection inputs. */
+export interface ProductCategoryOption {
+    id: string;
+    name: string;
+    company_id: string;
+}
+
+export interface ProductCategoryFilters {
+    search: string;
+    status: ProductCategoryStatus | 'all';
+    company_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export interface Product {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    category_id: string | null;
+    category?: { id: string; name: string } | null;
+    name: string;
+    sku: string | null;
+    description: string | null;
+    brand: string | null;
+    base_unit_id: string | null;
+    base_unit?: { id: string; name: string } | null;
+    tax_id: string | null;
+    tax?: { id: string; name: string } | null;
+    cost_price: string;
+    selling_price: string;
+    reorder_level: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductFilters {
+    search: string;
+    status: 'all' | 'active' | 'inactive';
+    company_id: string | 'all';
+    category_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/* Per-product sub-entities (managed on the product detail page). */
+
+export interface ProductVariant {
+    id: string;
+    product_id: string;
+    variant_name: string;
+    sku: string | null;
+    attributes: Record<string, string>;
+    cost_price: string;
+    selling_price: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductUnit {
+    id: string;
+    product_id: string;
+    unit_id: string;
+    unit?: { id: string; name: string; abbreviation: string } | null;
+    conversion_factor: string;
+    is_base_unit: boolean;
+}
+
+export interface ProductBarcode {
+    id: string;
+    product_id: string;
+    product_variant_id: string | null;
+    variant?: { id: string; name: string } | null;
+    product_unit_id: string | null;
+    unit?: { id: string; name: string } | null;
+    barcode: string;
+    is_primary: boolean;
+}

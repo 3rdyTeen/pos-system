@@ -9,6 +9,11 @@ use App\Repositories\Contracts\ModuleRepositoryInterface;
 use App\Repositories\Contracts\NavigationRepositoryInterface;
 use App\Repositories\Contracts\PaymentMethodRepositoryInterface;
 use App\Repositories\Contracts\PermissionRepositoryInterface;
+use App\Repositories\Contracts\ProductBarcodeRepositoryInterface;
+use App\Repositories\Contracts\ProductCategoryRepositoryInterface;
+use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Repositories\Contracts\ProductUnitRepositoryInterface;
+use App\Repositories\Contracts\ProductVariantRepositoryInterface;
 use App\Repositories\Contracts\RegisterRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\TaxRepositoryInterface;
@@ -21,6 +26,11 @@ use App\Repositories\Eloquent\ModuleRepository;
 use App\Repositories\Eloquent\NavigationRepository;
 use App\Repositories\Eloquent\PaymentMethodRepository;
 use App\Repositories\Eloquent\PermissionRepository;
+use App\Repositories\Eloquent\ProductBarcodeRepository;
+use App\Repositories\Eloquent\ProductCategoryRepository;
+use App\Repositories\Eloquent\ProductRepository;
+use App\Repositories\Eloquent\ProductUnitRepository;
+use App\Repositories\Eloquent\ProductVariantRepository;
 use App\Repositories\Eloquent\RegisterRepository;
 use App\Repositories\Eloquent\RoleRepository;
 use App\Repositories\Eloquent\TaxRepository;
@@ -49,6 +59,11 @@ class RepositoryServiceProvider extends ServiceProvider
         TaxRepositoryInterface::class => TaxRepository::class,
         UnitRepositoryInterface::class => UnitRepository::class,
         PaymentMethodRepositoryInterface::class => PaymentMethodRepository::class,
+        ProductCategoryRepositoryInterface::class => ProductCategoryRepository::class,
+        ProductRepositoryInterface::class => ProductRepository::class,
+        ProductVariantRepositoryInterface::class => ProductVariantRepository::class,
+        ProductUnitRepositoryInterface::class => ProductUnitRepository::class,
+        ProductBarcodeRepositoryInterface::class => ProductBarcodeRepository::class,
     ];
 
     /**

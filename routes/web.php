@@ -7,11 +7,18 @@ use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\ProductBarcodeController;
+use App\Http\Controllers\Api\ProductCategoryController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductUnitController;
+use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Resources\ProductResource;
+use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -43,6 +50,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('units', fn () => Inertia::render('units'))->name('units');
         Route::get('payment-methods', fn () => Inertia::render('payment-methods'))->name('payment-methods');
         Route::get('currencies', fn () => Inertia::render('currencies'))->name('currencies');
+
+        // Catalog module pages (Products / Categories).
+        Route::get('products', fn () => Inertia::render('products'))->name('products');
+        Route::get('products/{product}', function (Product $product) {
+            return Inertia::render('product-detail', [
+                'product' => ProductResource::make($product->load(['company', 'category', 'baseUnit', 'tax'])),
+            ]);
+        })->name('products.show');
+        Route::get('product-categories', fn () => Inertia::render('product-categories'))->name('product-categories');
 
         // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
@@ -103,6 +119,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('registers/{register}', [RegisterController::class, 'update'])->name('registers.update');
         Route::delete('registers/{register}', [RegisterController::class, 'destroy'])->name('registers.destroy');
 
+        Route::get('taxes/options', [TaxController::class, 'options'])->name('taxes.options');
         Route::get('taxes', [TaxController::class, 'index'])->name('taxes.index');
         Route::post('taxes', [TaxController::class, 'store'])->name('taxes.store');
         Route::put('taxes/{tax}', [TaxController::class, 'update'])->name('taxes.update');
@@ -123,6 +140,33 @@ Route::middleware(['auth'])->group(function () {
         Route::post('currencies', [CurrencyController::class, 'store'])->name('currencies.store');
         Route::put('currencies/{currency}', [CurrencyController::class, 'update'])->name('currencies.update');
         Route::delete('currencies/{currency}', [CurrencyController::class, 'destroy'])->name('currencies.destroy');
+
+        Route::get('product-categories/options', [ProductCategoryController::class, 'options'])->name('product-categories.options');
+        Route::get('product-categories', [ProductCategoryController::class, 'index'])->name('product-categories.index');
+        Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
+        Route::put('product-categories/{productCategory}', [ProductCategoryController::class, 'update'])->name('product-categories.update');
+        Route::delete('product-categories/{productCategory}', [ProductCategoryController::class, 'destroy'])->name('product-categories.destroy');
+
+        Route::get('products', [ProductController::class, 'index'])->name('products.index');
+        Route::post('products', [ProductController::class, 'store'])->name('products.store');
+        Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+        // Per-product sub-entities (managed on the product detail page).
+        Route::get('products/{product}/variants', [ProductVariantController::class, 'index'])->name('products.variants.index');
+        Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+        Route::put('product-variants/{productVariant}', [ProductVariantController::class, 'update'])->name('product-variants.update');
+        Route::delete('product-variants/{productVariant}', [ProductVariantController::class, 'destroy'])->name('product-variants.destroy');
+
+        Route::get('products/{product}/units', [ProductUnitController::class, 'index'])->name('products.units.index');
+        Route::post('products/{product}/units', [ProductUnitController::class, 'store'])->name('products.units.store');
+        Route::put('product-units/{productUnit}', [ProductUnitController::class, 'update'])->name('product-units.update');
+        Route::delete('product-units/{productUnit}', [ProductUnitController::class, 'destroy'])->name('product-units.destroy');
+
+        Route::get('products/{product}/barcodes', [ProductBarcodeController::class, 'index'])->name('products.barcodes.index');
+        Route::post('products/{product}/barcodes', [ProductBarcodeController::class, 'store'])->name('products.barcodes.store');
+        Route::put('product-barcodes/{productBarcode}', [ProductBarcodeController::class, 'update'])->name('product-barcodes.update');
+        Route::delete('product-barcodes/{productBarcode}', [ProductBarcodeController::class, 'destroy'])->name('product-barcodes.destroy');
     });
 });
 

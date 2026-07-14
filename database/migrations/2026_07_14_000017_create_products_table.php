@@ -26,6 +26,7 @@ return new class extends Migration
             $table->decimal('reorder_level', 14, 2)->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

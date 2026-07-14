@@ -1,11 +1,12 @@
 import { api } from '@/lib/api';
-import { Paginated, Tax, TaxFilters } from '@/types';
+import { Paginated, Tax, TaxFilters, TaxOption } from '@/types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 export const taxKeys = {
     all: ['taxes'] as const,
     lists: () => [...taxKeys.all, 'list'] as const,
     list: (filters: TaxFilters) => [...taxKeys.lists(), filters] as const,
+    options: (companyId?: string) => [...taxKeys.all, 'options', companyId ?? null] as const,
 };
 
 export function useTaxes(filters: TaxFilters) {
@@ -22,5 +23,15 @@ export function useTaxes(filters: TaxFilters) {
                 page: filters.page,
             }),
         placeholderData: keepPreviousData,
+    });
+}
+
+/** Taxes for selection inputs (e.g. the product tax dropdown), optionally scoped to a company. */
+export function useTaxOptions(companyId?: string) {
+    return useQuery({
+        queryKey: taxKeys.options(companyId),
+        queryFn: () => api.get<{ data: TaxOption[] }>('/api/taxes/options', { company_id: companyId }),
+        select: (response) => response.data,
+        staleTime: 60_000,
     });
 }

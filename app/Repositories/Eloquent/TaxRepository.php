@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Tax;
 use App\Repositories\Contracts\TaxRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class TaxRepository implements TaxRepositoryInterface
 {
@@ -69,5 +70,18 @@ class TaxRepository implements TaxRepositoryInterface
     public function delete(Tax $tax): void
     {
         $tax->delete();
+    }
+
+    /**
+     * Taxes for selection inputs (e.g. the product tax dropdown).
+     *
+     * @return Collection<int, Tax>
+     */
+    public function options(?string $companyId = null): Collection
+    {
+        return Tax::query()
+            ->when($companyId, fn ($query, string $id) => $query->where('company_id', $id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'rate', 'company_id']);
     }
 }
