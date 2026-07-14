@@ -1,0 +1,308 @@
+Act as a Senior Full-Stack Software Architect, Senior Backend Engineer, Senior Frontend Engineer, Database Architect, and UI/UX Designer.The application navigation (sidebar, menu, breadcrumbs, and route authorization) must **never be hardcoded**. Everything must be generated dynamically from the database based on the authenticated user's role and permissions.
+
+---
+
+# Core Modules
+
+Implement the following management pages:
+
+1. Modules
+2. Permissions
+3. Navigations
+4. Roles
+
+---
+
+# Modules Page
+
+The Modules page manages all application modules.
+
+## Features
+
+* Add Module
+* Edit Module
+* Delete Module
+
+No additional actions are required.
+
+## Fields
+
+* Module Name
+* Module Code
+* Is Enabled
+
+## UI Requirements
+
+* Display modules in a table.
+* The **Is Enabled** column must use a Toggle Switch.
+* Toggle changes should be saved immediately.
+* Include:
+
+  * Search
+  * Sorting
+  * Pagination
+* Confirmation dialog before deleting.
+* Toast notification after Create, Update, Delete, and Toggle operations.
+
+---
+
+# Permissions Page
+
+The Permissions page manages reusable permission actions.
+
+## Features
+
+* Add Permission
+* Edit Permission
+* Delete Permission
+
+No additional actions are required.
+
+## Fields
+
+* Name
+* Code
+* Is Enabled
+
+Example
+
+| Name    | Code    |
+| ------- | ------- |
+| View    | view    |
+| Create  | create  |
+| Update  | update  |
+| Delete  | delete  |
+| Export  | export  |
+| Approve | approve |
+
+## UI Requirements
+
+* Display permissions in a table.
+* The **Is Enabled** column must use a Toggle Switch.
+* Toggle changes should be saved immediately.
+* Include:
+
+  * Search
+  * Sorting
+  * Pagination
+* Confirmation dialog before deleting.
+* Toast notification after Create, Update, Delete, and Toggle operations.
+
+---
+
+# Navigations Page
+
+The Navigation page defines the application's sidebar and menu structure.
+
+All navigation items must be stored in the database.
+
+No navigation items may be hardcoded.
+
+## Features
+
+* Add Navigation
+* Edit Navigation
+* Delete Navigation
+
+## Fields
+
+* Module (Dropdown - Enabled Modules)
+* Parent Module (Nullable Dropdown)
+* Navigation Name
+* Navigation Code
+* Icon
+* Order (Optional Integer)
+
+## Order Logic
+
+* The **Order** field determines the display order of the navigation.
+* It is optional.
+* If left empty, the system must automatically assign the navigation to the **last position** by setting its order to the current maximum order + 1.
+* Navigation should always be sorted by the Order value.
+* Child navigation items should be ordered independently within their parent.
+
+## UI Requirements
+
+* Display navigation in a tree or hierarchical table.
+* Module dropdown only lists enabled modules.
+* Parent Module is optional.
+* Icon Picker for selecting icons.
+* Search
+* Sorting
+* Pagination
+
+## Navigation Refresh
+
+Since navigation is generated dynamically:
+
+After creating, updating, or deleting a navigation item:
+
+* Display a dialog informing the user that the application's navigation has changed.
+* Explain that a refresh is required for the new navigation to appear.
+* Provide:
+
+  * **Refresh Now** button
+  * **Later** button
+
+Refresh Now should reload the application.
+
+---
+
+# Roles Page
+
+Update the existing Roles page.
+
+The Roles page is responsible for assigning module access and permissions to each role.
+
+## Roles Table
+
+Columns
+
+* Role Name
+* Description
+* Status
+* Actions
+
+## Actions
+
+* Edit
+* Delete
+* **Manage Permissions**
+
+* The **Is Enabled** column must use a Toggle Switch.
+The **Manage Permissions** action must open a **Sheet/Drawer** from the right side instead of navigating to another page.
+
+---
+
+# Manage Permissions Sheet
+
+Display all **enabled modules**.
+
+Each module should be displayed as an expandable section or card.
+
+Example
+
+Inventory
+
+* Enable Module [Toggle]
+
+Permissions
+
+* View [Toggle]
+* Create [Toggle]
+* Update [Toggle]
+* Delete [Toggle]
+* Export [Toggle]
+
+Sales
+
+* Enable Module [Toggle]
+
+Permissions
+
+* View [Toggle]
+* Create [Toggle]
+* Update [Toggle]
+* Delete [Toggle]
+
+Reports
+
+* Enable Module [Toggle]
+
+Permissions
+
+* View [Toggle]
+* Export [Toggle]
+* Print [Toggle]
+
+## Module Toggle
+
+Every module has an **Enable Module** toggle.
+
+Rules:
+
+* Turning ON grants the role access to the module.
+* Turning OFF automatically disables every permission under that module.
+* Permission toggles become disabled when the module is disabled.
+
+## Permission Toggles
+
+Display all **enabled permissions** from the Permissions page.
+
+Each permission must have its own Toggle Switch.
+
+Permission codes must be generated automatically using:
+
+```text
+{module.code}.{permission.code}
+```
+
+Example
+
+Inventory Module
+
+Enabled Permissions
+
+* inventory.view
+* inventory.create
+* inventory.update
+* inventory.export
+
+Administrators must never manually enter permission codes.
+
+## Saving
+
+Clicking **Save** should:
+
+* Save module access.
+* Save permission assignments.
+* Show a success toast notification.
+* Changes should take effect immediately for newly authenticated sessions.
+
+---
+
+# Dynamic Navigation Authorization
+
+The sidebar must be generated dynamically from the Navigation table.
+
+For every navigation item:
+
+1. Read the selected Module.
+2. Generate the required permission using:
+
+```text
+{module.code}.view
+```
+
+Example
+
+Inventory Module
+
+Required Permission
+
+```text
+inventory.view
+```
+
+The navigation should only be displayed if:
+
+* The module is enabled for the user's role.
+* The `{module.code}.view` permission is enabled for the user's role.
+
+Otherwise, hide the navigation completely.
+
+No hardcoded permission checks are allowed.
+
+---
+
+# Expected Result
+
+The completed implementation must provide:
+
+* A **Modules** page for managing application modules with enable/disable toggles.
+* A **Permissions** page for managing reusable permission actions with enable/disable toggles.
+* A **Navigations** page where all menu items are stored in the database, support hierarchical navigation, automatic ordering, and prompt users to refresh after navigation changes.
+* A **Roles** page with a **Manage Permissions** drawer that allows administrators to enable modules and assign permissions using toggle switches.
+* Automatic generation of permission codes using the format `{module.code}.{permission.code}`.
+* A fully dynamic sidebar that displays navigation items only when the user's role has both the module enabled and the corresponding `{module.code}.view` permission enabled.
+* A scalable, maintainable, enterprise-ready RBAC system with zero hardcoded navigation or authorization logic.

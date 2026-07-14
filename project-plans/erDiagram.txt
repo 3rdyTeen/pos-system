@@ -1,0 +1,58 @@
+erDiagram
+
+    COMPANIES ||--o{ BRANCHES : has
+    BRANCHES ||--o{ WAREHOUSES : contains
+    BRANCHES ||--o{ REGISTERS : has
+    BRANCHES ||--o{ USERS : employs
+
+    COMPANIES ||--o{ ROLES : has
+    ROLES ||--o{ ROLE_PERMISSIONS : grants
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : assigned
+
+    COMPANIES ||--o{ PRODUCT_CATEGORIES : owns
+    PRODUCT_CATEGORIES ||--o{ PRODUCTS : categorizes
+    PRODUCTS ||--o{ PRODUCT_IMAGES : has
+    PRODUCTS ||--o{ PRODUCT_VARIANTS : has
+    PRODUCTS ||--o{ PRODUCT_UNITS : has
+    PRODUCTS ||--o{ PRODUCT_BARCODES : has
+
+    WAREHOUSES ||--o{ INVENTORY_BALANCES : stores
+    PRODUCTS ||--o{ INVENTORY_BALANCES : inventory
+
+    WAREHOUSES ||--o{ STOCK_MOVEMENTS : records
+    PRODUCTS ||--o{ STOCK_MOVEMENTS : moves
+
+    CUSTOMERS ||--o{ SALES : makes
+    USERS ||--o{ SALES : creates
+    BRANCHES ||--o{ SALES : processes
+    REGISTERS ||--o{ SALES : uses
+
+    SALES ||--o{ SALES_DETAILS : contains
+    PRODUCTS ||--o{ SALES_DETAILS : sold
+
+    SALES ||--o{ PAYMENTS : paid_by
+
+    SUPPLIERS ||--o{ PURCHASE_ORDERS : receives
+    PURCHASE_ORDERS ||--o{ PURCHASE_DETAILS : contains
+    PRODUCTS ||--o{ PURCHASE_DETAILS : purchased
+
+    SALES ||--o{ SALES_RETURNS : returns
+    SALES_RETURNS ||--o{ SALES_RETURN_DETAILS : contains
+
+    PURCHASE_ORDERS ||--o{ PURCHASE_RETURNS : returns
+    PURCHASE_RETURNS ||--o{ PURCHASE_RETURN_DETAILS : contains
+
+    CUSTOMERS ||--|| LOYALTY_ACCOUNTS : owns
+    LOYALTY_ACCOUNTS ||--o{ CUSTOMER_POINTS : transactions
+
+    COMPANIES ||--o{ PRICE_LISTS : has
+    PRICE_LISTS ||--o{ PRODUCT_PRICES : contains
+
+    COMPANIES ||--o{ CHART_OF_ACCOUNTS : owns
+    JOURNAL_ENTRIES ||--o{ JOURNAL_ENTRY_LINES : contains
+    CHART_OF_ACCOUNTS ||--o{ JOURNAL_ENTRY_LINES : posts
+
+    USERS ||--o{ AUDIT_LOGS : creates
+    USERS ||--o{ ACTIVITY_LOGS : creates
+
+    COMPANIES ||--o{ SETTINGS : configures

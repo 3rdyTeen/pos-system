@@ -1,0 +1,728 @@
+-- ======================================================================================
+-- POINT OF SALE (POS) SYSTEM — DATABASE SCHEMA
+-- Generated from system module diagram
+-- Conventions:
+--   * Every table has an auto-increment BIGINT primary key `id`
+--   * created_at / updated_at timestamps on transactional & master tables
+--   * Foreign keys named <referenced_table_singular>_id
+-- ======================================================================================
+
+
+-- ======================================================================================
+-- 1. CORE / ORGANIZATION
+-- ======================================================================================
+
+CREATE TABLE companies (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name                VARCHAR(150) NOT NULL,
+    legal_name          VARCHAR(150),
+    tax_id              VARCHAR(50),
+    email               VARCHAR(150),
+    phone               VARCHAR(30),
+    address             VARCHAR(255),
+    logo_url            VARCHAR(255),
+    default_currency    VARCHAR(50),
+    timezone            VARCHAR(50) DEFAULT 'UTC',
+    status              ENUM('active','inactive','suspended') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE branches (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                VARCHAR(150) NOT NULL,
+    code                VARCHAR(30) UNIQUE,
+    address             VARCHAR(255),
+    phone               VARCHAR(30),
+    email               VARCHAR(150),
+    is_main_branch      BOOLEAN DEFAULT FALSE,
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE warehouses (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    name                VARCHAR(150) NOT NULL,
+    code                VARCHAR(30) UNIQUE,
+    address             VARCHAR(255),
+    is_default          BOOLEAN DEFAULT FALSE,
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE registers (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    name                VARCHAR(100) NOT NULL,
+    code                VARCHAR(30) UNIQUE,
+    ip_address          VARCHAR(45),
+    status              ENUM('open','closed','maintenance') DEFAULT 'closed',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE roles (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                VARCHAR(100) NOT NULL,
+    description         VARCHAR(255),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE permissions (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    module              VARCHAR(50) NOT NULL,
+    action              VARCHAR(50) NOT NULL,
+    name                VARCHAR(100) NOT NULL,
+    description         VARCHAR(255)
+);
+
+CREATE TABLE role_permissions (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    role_id             BIGINT UNSIGNED NOT NULL REFERENCES roles(id),
+    permission_id       BIGINT UNSIGNED NOT NULL REFERENCES permissions(id),
+    UNIQUE (role_id, permission_id)
+);
+
+CREATE TABLE users (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    branch_id           BIGINT UNSIGNED REFERENCES branches(id),
+    role_id             BIGINT UNSIGNED REFERENCES roles(id),
+    username            VARCHAR(50) UNIQUE NOT NULL,
+    email               VARCHAR(150) UNIQUE,
+    phone               VARCHAR(30),
+    password_hash       VARCHAR(255) NOT NULL,
+    first_name          VARCHAR(100),
+    last_name           VARCHAR(100),
+    avatar_url          VARCHAR(255),
+    status              ENUM('active','inactive','locked') DEFAULT 'active',
+    last_login_at       TIMESTAMP NULL,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+-- ======================================================================================
+-- 2. PRODUCT MANAGEMENT
+-- ======================================================================================
+
+CREATE TABLE product_categories (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    parent_id           BIGINT UNSIGNED REFERENCES product_categories(id),
+    name                VARCHAR(100) NOT NULL,
+    slug                VARCHAR(120),
+    description         VARCHAR(255),
+    image_url           VARCHAR(255),
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    category_id         BIGINT UNSIGNED REFERENCES product_categories(id),
+    name                VARCHAR(150) NOT NULL,
+    sku                 VARCHAR(50) UNIQUE,
+    description         TEXT,
+    brand               VARCHAR(100),
+    base_unit_id        BIGINT UNSIGNED,           -- FK -> units.id
+    tax_id              BIGINT UNSIGNED,           -- FK -> taxes.id
+    cost_price          DECIMAL(14,2) DEFAULT 0,
+    selling_price       DECIMAL(14,2) DEFAULT 0,
+    reorder_level       DECIMAL(14,2) DEFAULT 0,
+    is_active           BOOLEAN DEFAULT TRUE,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_images (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    image_url           VARCHAR(255) NOT NULL,
+    is_primary          BOOLEAN DEFAULT FALSE,
+    sort_order          INT DEFAULT 0,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_units (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    unit_id             BIGINT UNSIGNED NOT NULL,  -- FK -> units.id
+    conversion_factor   DECIMAL(14,4) DEFAULT 1,
+    is_base_unit        BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE product_variants (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    variant_name        VARCHAR(150) NOT NULL,      -- e.g. "Red / Large"
+    sku                 VARCHAR(50) UNIQUE,
+    attributes          JSON,                        -- {"color":"red","size":"L"}
+    cost_price          DECIMAL(14,2) DEFAULT 0,
+    selling_price       DECIMAL(14,2) DEFAULT 0,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_barcodes (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    product_unit_id     BIGINT UNSIGNED REFERENCES product_units(id),
+    barcode             VARCHAR(100) UNIQUE NOT NULL,
+    is_primary          BOOLEAN DEFAULT FALSE
+);
+
+
+-- ======================================================================================
+-- 3. INVENTORY MODULE
+-- ======================================================================================
+
+CREATE TABLE inventory_balances (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    warehouse_id        BIGINT UNSIGNED NOT NULL REFERENCES warehouses(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    quantity_on_hand    DECIMAL(14,4) DEFAULT 0,
+    quantity_reserved   DECIMAL(14,4) DEFAULT 0,
+    quantity_available  DECIMAL(14,4) GENERATED ALWAYS AS (quantity_on_hand - quantity_reserved) STORED,
+    average_cost        DECIMAL(14,4) DEFAULT 0,
+    last_counted_at     TIMESTAMP NULL,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (warehouse_id, product_id, product_variant_id)
+);
+
+CREATE TABLE stock_movements (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    warehouse_id        BIGINT UNSIGNED NOT NULL REFERENCES warehouses(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    movement_type       ENUM('purchase','sale','transfer_in','transfer_out','adjustment','return_in','return_out') NOT NULL,
+    quantity            DECIMAL(14,4) NOT NULL,
+    reference_type      VARCHAR(50),                 -- e.g. 'sales', 'purchase_orders'
+    reference_id        BIGINT UNSIGNED,
+    before_qty          DECIMAL(14,4),
+    after_qty           DECIMAL(14,4),
+    created_by          BIGINT UNSIGNED REFERENCES users(id),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE stock_transfers (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    from_warehouse_id   BIGINT UNSIGNED NOT NULL REFERENCES warehouses(id),
+    to_warehouse_id     BIGINT UNSIGNED NOT NULL REFERENCES warehouses(id),
+    transfer_number     VARCHAR(50) UNIQUE NOT NULL,
+    status              ENUM('draft','in_transit','completed','cancelled') DEFAULT 'draft',
+    requested_by        BIGINT UNSIGNED REFERENCES users(id),
+    approved_by         BIGINT UNSIGNED REFERENCES users(id),
+    transfer_date       DATE,
+    notes               VARCHAR(255),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE stock_transfer_details (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    stock_transfer_id   BIGINT UNSIGNED NOT NULL REFERENCES stock_transfers(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    quantity            DECIMAL(14,4) NOT NULL,
+    unit_cost           DECIMAL(14,2) DEFAULT 0
+);
+
+CREATE TABLE stock_adjustments (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    warehouse_id        BIGINT UNSIGNED NOT NULL REFERENCES warehouses(id),
+    adjustment_number   VARCHAR(50) UNIQUE NOT NULL,
+    reason              VARCHAR(255),
+    status              ENUM('draft','approved','cancelled') DEFAULT 'draft',
+    adjusted_by         BIGINT UNSIGNED REFERENCES users(id),
+    adjustment_date     DATE,
+    notes               VARCHAR(255),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE stock_adjustment_details (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    stock_adjustment_id BIGINT UNSIGNED NOT NULL REFERENCES stock_adjustments(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    system_qty          DECIMAL(14,4) NOT NULL,
+    counted_qty         DECIMAL(14,4) NOT NULL,
+    difference          DECIMAL(14,4) GENERATED ALWAYS AS (counted_qty - system_qty) STORED,
+    unit_cost           DECIMAL(14,2) DEFAULT 0
+);
+
+
+-- ======================================================================================
+-- 4. SALES MODULE
+-- ======================================================================================
+
+CREATE TABLE customers (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    customer_group_id   BIGINT UNSIGNED,            -- FK -> customer_groups.id
+    name                VARCHAR(150) NOT NULL,
+    email               VARCHAR(150),
+    phone               VARCHAR(30),
+    address             VARCHAR(255),
+    tax_id              VARCHAR(50),
+    credit_limit        DECIMAL(14,2) DEFAULT 0,
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sales (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    register_id         BIGINT UNSIGNED REFERENCES registers(id),
+    customer_id         BIGINT UNSIGNED REFERENCES customers(id),
+    user_id             BIGINT UNSIGNED NOT NULL REFERENCES users(id),   -- cashier
+    sale_number         VARCHAR(50) UNIQUE NOT NULL,
+    sale_date           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    subtotal            DECIMAL(14,2) DEFAULT 0,
+    discount_total       DECIMAL(14,2) DEFAULT 0,
+    tax_total           DECIMAL(14,2) DEFAULT 0,
+    grand_total          DECIMAL(14,2) DEFAULT 0,
+    amount_paid          DECIMAL(14,2) DEFAULT 0,
+    amount_due           DECIMAL(14,2) DEFAULT 0,
+    status               ENUM('draft','completed','void','held') DEFAULT 'completed',
+    payment_status        ENUM('unpaid','partial','paid') DEFAULT 'paid',
+    notes                VARCHAR(255),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sales_details (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    sale_id             BIGINT UNSIGNED NOT NULL REFERENCES sales(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    unit_id             BIGINT UNSIGNED,            -- FK -> units.id
+    quantity            DECIMAL(14,4) NOT NULL,
+    unit_price          DECIMAL(14,2) NOT NULL,
+    discount_amount     DECIMAL(14,2) DEFAULT 0,
+    tax_amount          DECIMAL(14,2) DEFAULT 0,
+    line_total          DECIMAL(14,2) NOT NULL
+);
+
+CREATE TABLE payments (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    sale_id             BIGINT UNSIGNED NOT NULL REFERENCES sales(id),
+    payment_method_id   BIGINT UNSIGNED NOT NULL,   -- FK -> payment_methods.id
+    amount               DECIMAL(14,2) NOT NULL,
+    reference_number     VARCHAR(100),
+    paid_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    received_by          BIGINT UNSIGNED REFERENCES users(id),
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE discounts (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                VARCHAR(100) NOT NULL,
+    type                ENUM('percentage','fixed') NOT NULL,
+    value               DECIMAL(14,2) NOT NULL,
+    applies_to          ENUM('sale','product','category') DEFAULT 'sale',
+    start_date          DATE,
+    end_date            DATE,
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sales_taxes (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    sale_id             BIGINT UNSIGNED NOT NULL REFERENCES sales(id),
+    sales_detail_id     BIGINT UNSIGNED REFERENCES sales_details(id),
+    tax_id              BIGINT UNSIGNED NOT NULL,   -- FK -> taxes.id
+    tax_name            VARCHAR(100),
+    rate                DECIMAL(6,3),
+    taxable_amount      DECIMAL(14,2),
+    tax_amount          DECIMAL(14,2)
+);
+
+
+-- ======================================================================================
+-- 5. PURCHASE MODULE
+-- ======================================================================================
+
+CREATE TABLE suppliers (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                VARCHAR(150) NOT NULL,
+    contact_person      VARCHAR(100),
+    email               VARCHAR(150),
+    phone               VARCHAR(30),
+    address             VARCHAR(255),
+    tax_id              VARCHAR(50),
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE purchase_orders (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    warehouse_id        BIGINT UNSIGNED NOT NULL REFERENCES warehouses(id),
+    supplier_id         BIGINT UNSIGNED NOT NULL REFERENCES suppliers(id),
+    user_id             BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+    po_number           VARCHAR(50) UNIQUE NOT NULL,
+    order_date          DATE,
+    expected_date       DATE,
+    subtotal            DECIMAL(14,2) DEFAULT 0,
+    tax_total           DECIMAL(14,2) DEFAULT 0,
+    discount_total      DECIMAL(14,2) DEFAULT 0,
+    grand_total         DECIMAL(14,2) DEFAULT 0,
+    status              ENUM('draft','ordered','partially_received','received','cancelled') DEFAULT 'draft',
+    notes               VARCHAR(255),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE purchase_details (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    purchase_order_id   BIGINT UNSIGNED NOT NULL REFERENCES purchase_orders(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    quantity            DECIMAL(14,4) NOT NULL,
+    unit_cost           DECIMAL(14,2) NOT NULL,
+    tax_amount          DECIMAL(14,2) DEFAULT 0,
+    discount_amount     DECIMAL(14,2) DEFAULT 0,
+    line_total          DECIMAL(14,2) NOT NULL,
+    received_qty        DECIMAL(14,4) DEFAULT 0
+);
+
+CREATE TABLE purchase_payments (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    purchase_order_id   BIGINT UNSIGNED NOT NULL REFERENCES purchase_orders(id),
+    payment_method_id   BIGINT UNSIGNED NOT NULL,   -- FK -> payment_methods.id
+    amount              DECIMAL(14,2) NOT NULL,
+    reference_number    VARCHAR(100),
+    paid_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    paid_by             BIGINT UNSIGNED REFERENCES users(id),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ======================================================================================
+-- 6. RETURNS & REFUNDS
+-- ======================================================================================
+
+CREATE TABLE sales_returns (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    sale_id             BIGINT UNSIGNED NOT NULL REFERENCES sales(id),
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    user_id             BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+    return_number       VARCHAR(50) UNIQUE NOT NULL,
+    return_date         DATE,
+    reason              VARCHAR(255),
+    total_amount        DECIMAL(14,2) DEFAULT 0,
+    refund_method       VARCHAR(50),
+    status              ENUM('pending','completed','cancelled') DEFAULT 'completed',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sales_return_details (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    sales_return_id     BIGINT UNSIGNED NOT NULL REFERENCES sales_returns(id),
+    sales_detail_id     BIGINT UNSIGNED REFERENCES sales_details(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    quantity            DECIMAL(14,4) NOT NULL,
+    unit_price          DECIMAL(14,2) NOT NULL,
+    line_total          DECIMAL(14,2) NOT NULL
+);
+
+CREATE TABLE purchase_returns (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    purchase_order_id   BIGINT UNSIGNED NOT NULL REFERENCES purchase_orders(id),
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    user_id             BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+    return_number       VARCHAR(50) UNIQUE NOT NULL,
+    return_date         DATE,
+    reason              VARCHAR(255),
+    total_amount        DECIMAL(14,2) DEFAULT 0,
+    status              ENUM('pending','completed','cancelled') DEFAULT 'completed',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE purchase_return_details (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    purchase_return_id  BIGINT UNSIGNED NOT NULL REFERENCES purchase_returns(id),
+    purchase_detail_id  BIGINT UNSIGNED REFERENCES purchase_details(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    quantity            DECIMAL(14,4) NOT NULL,
+    unit_cost           DECIMAL(14,2) NOT NULL,
+    line_total          DECIMAL(14,2) NOT NULL
+);
+
+
+-- ======================================================================================
+-- 7. PRICING MODULE
+-- ======================================================================================
+
+CREATE TABLE price_lists (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                VARCHAR(100) NOT NULL,
+    currency_id         VARCHAR(50),
+    is_default          BOOLEAN DEFAULT FALSE,
+    start_date          DATE,
+    end_date            DATE,
+    status              ENUM('active','inactive') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_prices (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    price_list_id       BIGINT UNSIGNED NOT NULL REFERENCES price_lists(id),
+    product_id          BIGINT UNSIGNED NOT NULL REFERENCES products(id),
+    product_variant_id  BIGINT UNSIGNED REFERENCES product_variants(id),
+    price               DECIMAL(14,2) NOT NULL,
+    min_quantity        DECIMAL(14,4) DEFAULT 1,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+-- ======================================================================================
+-- 8. CUSTOMER MODULE
+-- ======================================================================================
+
+CREATE TABLE customer_groups (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                VARCHAR(100) NOT NULL,
+    discount_percentage DECIMAL(6,2) DEFAULT 0,
+    description         VARCHAR(255),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE loyalty_accounts (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    customer_id         BIGINT UNSIGNED NOT NULL UNIQUE REFERENCES customers(id),
+    points_balance      DECIMAL(14,2) DEFAULT 0,
+    tier                VARCHAR(50),
+    enrolled_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE customer_points (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    loyalty_account_id  BIGINT UNSIGNED NOT NULL REFERENCES loyalty_accounts(id),
+    sale_id             BIGINT UNSIGNED REFERENCES sales(id),
+    points_earned       DECIMAL(14,2) DEFAULT 0,
+    points_redeemed     DECIMAL(14,2) DEFAULT 0,
+    transaction_type    ENUM('earn','redeem','expire','adjustment') NOT NULL,
+    balance_after       DECIMAL(14,2),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE gift_cards (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    code                VARCHAR(50) UNIQUE NOT NULL,
+    initial_balance     DECIMAL(14,2) NOT NULL,
+    current_balance     DECIMAL(14,2) NOT NULL,
+    issued_to_customer_id BIGINT UNSIGNED REFERENCES customers(id),
+    expiry_date         DATE,
+    status              ENUM('active','redeemed','expired','cancelled') DEFAULT 'active',
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ======================================================================================
+-- 9. ACCOUNTING READY
+-- ======================================================================================
+
+CREATE TABLE chart_of_accounts (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    account_code        VARCHAR(20) UNIQUE NOT NULL,
+    account_name        VARCHAR(150) NOT NULL,
+    account_type        ENUM('asset','liability','equity','income','expense') NOT NULL,
+    parent_id           BIGINT UNSIGNED REFERENCES chart_of_accounts(id),
+    is_active            BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE journal_entries (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    entry_number        VARCHAR(50) UNIQUE NOT NULL,
+    entry_date          DATE NOT NULL,
+    reference_type      VARCHAR(50),                 -- e.g. 'sales','purchase_orders','expenses'
+    reference_id        BIGINT UNSIGNED,
+    description         VARCHAR(255),
+    created_by          BIGINT UNSIGNED REFERENCES users(id),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE journal_entry_lines (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    journal_entry_id    BIGINT UNSIGNED NOT NULL REFERENCES journal_entries(id),
+    account_id          BIGINT UNSIGNED NOT NULL REFERENCES chart_of_accounts(id),
+    debit               DECIMAL(14,2) DEFAULT 0,
+    credit              DECIMAL(14,2) DEFAULT 0,
+    description         VARCHAR(255)
+);
+
+CREATE TABLE expenses (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    branch_id           BIGINT UNSIGNED NOT NULL REFERENCES branches(id),
+    category             VARCHAR(100),
+    amount               DECIMAL(14,2) NOT NULL,
+    expense_date         DATE NOT NULL,
+    paid_to              VARCHAR(150),
+    payment_method_id    BIGINT UNSIGNED,            -- FK -> payment_methods.id
+    notes                VARCHAR(255),
+    recorded_by          BIGINT UNSIGNED REFERENCES users(id),
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- General Ledger is typically a VIEW aggregating journal_entry_lines,
+-- but modeled here as a materialized table for reporting performance.
+CREATE TABLE general_ledger (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    account_id          BIGINT UNSIGNED NOT NULL REFERENCES chart_of_accounts(id),
+    journal_entry_line_id BIGINT UNSIGNED NOT NULL REFERENCES journal_entry_lines(id),
+    transaction_date    DATE NOT NULL,
+    debit               DECIMAL(14,2) DEFAULT 0,
+    credit              DECIMAL(14,2) DEFAULT 0,
+    running_balance     DECIMAL(14,2) DEFAULT 0
+);
+
+
+-- ======================================================================================
+-- 10. REPORTING / AUDIT
+-- ======================================================================================
+
+CREATE TABLE audit_logs (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id             BIGINT UNSIGNED REFERENCES users(id),
+    action               VARCHAR(50) NOT NULL,        -- create/update/delete
+    entity_type          VARCHAR(100) NOT NULL,
+    entity_id            BIGINT UNSIGNED NOT NULL,
+    old_values            JSON,
+    new_values            JSON,
+    ip_address            VARCHAR(45),
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE activity_logs (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id             BIGINT UNSIGNED REFERENCES users(id),
+    activity             VARCHAR(100) NOT NULL,       -- e.g. 'login','shift_open','sale_void'
+    description           VARCHAR(255),
+    created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Note: Sales/Inventory/Purchase/Profit reports are typically generated via
+-- SQL VIEWs or a reporting layer on top of the transactional tables above
+-- (sales, sales_details, purchase_orders, inventory_balances, stock_movements)
+-- rather than as separate physical tables.
+
+
+-- ======================================================================================
+-- 11. SYSTEM
+-- ======================================================================================
+
+CREATE TABLE settings (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id          BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    setting_key          VARCHAR(100) NOT NULL,
+    setting_value         TEXT,
+    created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (company_id, setting_key)
+);
+
+CREATE TABLE currencies (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code                 VARCHAR(10) UNIQUE NOT NULL,  -- ISO code e.g. USD
+    name                  VARCHAR(50) NOT NULL,
+    symbol                VARCHAR(10),
+    exchange_rate          DECIMAL(14,6) DEFAULT 1,
+    is_base                BOOLEAN DEFAULT FALSE,
+    status                 ENUM('active','inactive') DEFAULT 'active'
+);
+
+CREATE TABLE taxes (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id           BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                  VARCHAR(100) NOT NULL,
+    rate                  DECIMAL(6,3) NOT NULL,
+    type                  ENUM('sales','purchase','both') DEFAULT 'both',
+    is_inclusive           BOOLEAN DEFAULT FALSE,
+    status                 ENUM('active','inactive') DEFAULT 'active'
+);
+
+CREATE TABLE units (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id           BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                  VARCHAR(50) NOT NULL,        -- e.g. Kilogram
+    abbreviation           VARCHAR(10) NOT NULL,        -- e.g. kg
+    base_unit_id            BIGINT UNSIGNED REFERENCES units(id),
+    conversion_factor       DECIMAL(14,4) DEFAULT 1
+);
+
+CREATE TABLE payment_methods (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id           BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                  VARCHAR(50) NOT NULL,        -- Cash, Card, Mobile Wallet...
+    type                  VARCHAR(50),
+    is_active               BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE shifts (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    register_id           BIGINT UNSIGNED NOT NULL REFERENCES registers(id),
+    user_id                BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+    opening_balance         DECIMAL(14,2) DEFAULT 0,
+    closing_balance         DECIMAL(14,2),
+    opened_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at               TIMESTAMP NULL,
+    status                  ENUM('open','closed') DEFAULT 'open',
+    notes                   VARCHAR(255)
+);
+
+CREATE TABLE notifications (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id                BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+    title                   VARCHAR(150) NOT NULL,
+    message                 VARCHAR(500),
+    type                    VARCHAR(50),                 -- info/warning/alert
+    is_read                 BOOLEAN DEFAULT FALSE,
+    created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE attachments (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    entity_type            VARCHAR(100) NOT NULL,        -- e.g. 'products','sales'
+    entity_id               BIGINT UNSIGNED NOT NULL,
+    file_url                 VARCHAR(255) NOT NULL,
+    file_name                 VARCHAR(150),
+    file_type                 VARCHAR(50),
+    uploaded_by                BIGINT UNSIGNED REFERENCES users(id),
+    created_at                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE api_keys (
+    id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id             BIGINT UNSIGNED NOT NULL REFERENCES companies(id),
+    name                    VARCHAR(100) NOT NULL,
+    key_hash                 VARCHAR(255) NOT NULL,
+    permissions_scope          JSON,
+    last_used_at               TIMESTAMP NULL,
+    expires_at                  TIMESTAMP NULL,
+    status                      ENUM('active','revoked') DEFAULT 'active',
+    created_at                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

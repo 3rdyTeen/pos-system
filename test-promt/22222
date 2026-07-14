@@ -1,0 +1,179 @@
+Act as a Senior Full-Stack Software Architect. Build a production-ready Enterprise RBAC system using Clean Architecture, SOLID principles, Repository Pattern, and Service Layer.
+
+## Core Requirement
+
+Implement a **fully database-driven RBAC system**. Sidebar, menus, breadcrumbs, routes, and authorization must be generated dynamically from database records. **No hardcoded navigation or permission checks.**
+
+
+implement new page Modules, permissions, navigation.
+
+## Features
+
+### Modules Management
+
+Create a Modules CRUD page.
+
+Fields:
+
+* Name
+* Code
+* Enabled toggle
+
+Requirements:
+
+* Search, sorting, pagination
+* Instant toggle save
+* Delete confirmation
+* Success toast for create/update/delete/toggle
+
+---
+
+### Permissions Management
+
+Create reusable global permissions CRUD.
+
+Fields:
+
+* Name
+* Code
+* Enabled toggle
+
+Examples:
+
+* view
+* create
+* update
+* delete
+* export
+* approve
+
+Same UI requirements as Modules.
+
+---
+
+### Navigation Management
+
+Create database-driven navigation CRUD.
+
+Fields:
+
+* Module (enabled modules only)
+* Parent navigation (optional)
+* Name
+* Code
+* Icon
+* Order (optional)
+
+Rules:
+
+* Auto assign order when empty: `max(order) + 1`
+* Sort navigation by order
+* Sort child items within parent
+* Support hierarchical tree structure
+* Include search, sorting, pagination, and icon picker
+
+After navigation changes:
+
+* Show refresh notification dialog
+* Options:
+
+  * Refresh Now
+  * Later
+
+---
+
+### Roles Management
+
+Create Role CRUD.
+
+Fields:
+
+* Name
+* Description
+* Status
+
+Actions:
+
+* Edit
+* Delete
+* Manage Permissions
+
+Manage Permissions opens a right-side drawer/sheet.
+
+---
+
+## Role Permission Assignment
+
+Display all enabled modules.
+
+Each module should have:
+
+* Enable Module toggle
+* Permission toggles
+
+Rules:
+
+* Disabling a module disables all related permissions.
+* Permissions are disabled while the module is disabled.
+* Only enabled permissions appear.
+* Saving updates module access and permission assignments.
+* Show success toast after saving.
+
+Generate permission codes automatically:
+
+```
+{module.code}.{permission.code}
+```
+
+Example:
+
+```
+inventory.view
+inventory.create
+inventory.update
+inventory.delete
+```
+
+Users never manually create permission codes.
+
+---
+
+## Dynamic Authorization
+
+A navigation item is visible only if:
+
+1. The module is enabled for the user's role.
+2. The user role has permission:
+
+```
+{module.code}.view
+```
+
+Example:
+
+```
+inventory.view
+```
+
+Use the Navigation table to dynamically generate:
+
+* Sidebar
+* Menus
+* Breadcrumbs
+* Route authorization
+
+---
+
+## Final Requirements
+
+Deliver an enterprise-grade scalable RBAC implementation with:
+
+* Module CRUD
+* Permission CRUD
+* Navigation CRUD with hierarchy/order
+* Role management
+* Permission assignment UI
+* Automatic permission generation
+* Database-driven navigation
+* Database-driven route authorization
+* Zero hardcoded permission or navigation logic
