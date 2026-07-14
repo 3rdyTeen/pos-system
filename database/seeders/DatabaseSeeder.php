@@ -119,8 +119,8 @@ class DatabaseSeeder extends Seeder
             ['Modules', 'modules', 'settings', '/modules', 'boxes'],
             ['Permissions', 'permissions', 'settings', '/permissions', 'key-round'],
             ['Navigations', 'navigations', 'settings', '/navigations', 'list-tree'],
-            ['Roles', 'roles', 'settings', '/roles', 'settings', 'shield'],
-            ['Users', 'users', 'settings', '/users', 'settings', 'users'],
+            ['Roles', 'roles', 'settings', '/roles', 'shield'],
+            ['Users', 'users', 'settings', '/users', 'users'],
         ];
 
         foreach ($childNavs as $index => [$name, $code, $parent, $url, $icon]) {

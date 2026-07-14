@@ -196,3 +196,96 @@ export interface RolePermissionMatrixModule {
     granted: boolean;
     permissions: RolePermissionMatrixPermission[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Organization: Companies, Branches, Registers                               */
+/* -------------------------------------------------------------------------- */
+
+export type CompanyStatus = 'active' | 'inactive' | 'suspended';
+
+export interface Company {
+    id: string;
+    name: string;
+    legal_name: string | null;
+    tax_id: string | null;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    logo_url: string | null;
+    default_currency: string | null;
+    timezone: string | null;
+    status: CompanyStatus;
+    branches_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+/** Minimal company reference used by selection inputs. */
+export interface CompanyOption {
+    id: string;
+    name: string;
+}
+
+export interface CompanyFilters {
+    search: string;
+    status: CompanyStatus | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export type BranchStatus = 'active' | 'inactive';
+
+export interface Branch {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    name: string;
+    code: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    is_main_branch: boolean;
+    status: BranchStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+/** Minimal branch reference used by selection inputs. */
+export interface BranchOption {
+    id: string;
+    name: string;
+    company_id: string;
+}
+
+export interface BranchFilters {
+    search: string;
+    status: BranchStatus | 'all';
+    company_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export type RegisterStatus = 'open' | 'closed' | 'maintenance';
+
+export interface Register {
+    id: string;
+    branch_id: string;
+    branch?: { id: string; name: string } | null;
+    name: string;
+    code: string | null;
+    ip_address: string | null;
+    status: RegisterStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface RegisterFilters {
+    search: string;
+    status: RegisterStatus | 'all';
+    branch_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}

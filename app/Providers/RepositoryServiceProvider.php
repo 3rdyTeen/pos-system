@@ -2,14 +2,20 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\BranchRepositoryInterface;
+use App\Repositories\Contracts\CompanyRepositoryInterface;
 use App\Repositories\Contracts\ModuleRepositoryInterface;
 use App\Repositories\Contracts\NavigationRepositoryInterface;
 use App\Repositories\Contracts\PermissionRepositoryInterface;
+use App\Repositories\Contracts\RegisterRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Eloquent\BranchRepository;
+use App\Repositories\Eloquent\CompanyRepository;
 use App\Repositories\Eloquent\ModuleRepository;
 use App\Repositories\Eloquent\NavigationRepository;
 use App\Repositories\Eloquent\PermissionRepository;
+use App\Repositories\Eloquent\RegisterRepository;
 use App\Repositories\Eloquent\RoleRepository;
 use App\Repositories\Eloquent\UserRepository;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +34,9 @@ class RepositoryServiceProvider extends ServiceProvider
         ModuleRepositoryInterface::class => ModuleRepository::class,
         PermissionRepositoryInterface::class => PermissionRepository::class,
         NavigationRepositoryInterface::class => NavigationRepository::class,
+        CompanyRepositoryInterface::class => CompanyRepository::class,
+        BranchRepositoryInterface::class => BranchRepository::class,
+        RegisterRepositoryInterface::class => RegisterRepository::class,
     ];
 
     /**

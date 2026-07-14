@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +28,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('navigations', fn () => Inertia::render('navigations'))->name('navigations');
         Route::get('roles', fn () => Inertia::render('roles'))->name('roles');
         Route::get('users', fn () => Inertia::render('users'))->name('users');
+
+        // Organization module pages (Companies / Branches / Registers).
+        Route::get('companies', fn () => Inertia::render('companies'))->name('companies');
+        Route::get('branches', fn () => Inertia::render('branches'))->name('branches');
+        Route::get('registers', fn () => Inertia::render('registers'))->name('registers');
 
         // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
@@ -67,6 +75,23 @@ Route::middleware(['auth'])->group(function () {
         Route::post('navigations', [NavigationController::class, 'store'])->name('navigations.store');
         Route::put('navigations/{navigation}', [NavigationController::class, 'update'])->name('navigations.update');
         Route::delete('navigations/{navigation}', [NavigationController::class, 'destroy'])->name('navigations.destroy');
+
+        Route::get('companies/options', [CompanyController::class, 'options'])->name('companies.options');
+        Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
+        Route::post('companies', [CompanyController::class, 'store'])->name('companies.store');
+        Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
+        Route::delete('companies/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
+
+        Route::get('branches/options', [BranchController::class, 'options'])->name('branches.options');
+        Route::get('branches', [BranchController::class, 'index'])->name('branches.index');
+        Route::post('branches', [BranchController::class, 'store'])->name('branches.store');
+        Route::put('branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
+        Route::delete('branches/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+
+        Route::get('registers', [RegisterController::class, 'index'])->name('registers.index');
+        Route::post('registers', [RegisterController::class, 'store'])->name('registers.store');
+        Route::put('registers/{register}', [RegisterController::class, 'update'])->name('registers.update');
+        Route::delete('registers/{register}', [RegisterController::class, 'destroy'])->name('registers.destroy');
     });
 });
 
