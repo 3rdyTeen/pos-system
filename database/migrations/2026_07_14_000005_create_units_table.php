@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('abbreviation', 10);
             $table->foreignUuid('base_unit_id')->nullable()->constrained('units')->nullOnDelete();
             $table->decimal('conversion_factor', 14, 4)->default(1);
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

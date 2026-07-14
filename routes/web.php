@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NavigationController;
+use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\TaxController;
+use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -33,6 +37,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('companies', fn () => Inertia::render('companies'))->name('companies');
         Route::get('branches', fn () => Inertia::render('branches'))->name('branches');
         Route::get('registers', fn () => Inertia::render('registers'))->name('registers');
+
+        // System Settings module pages (Taxes / Units / Payment Methods / Currencies).
+        Route::get('taxes', fn () => Inertia::render('taxes'))->name('taxes');
+        Route::get('units', fn () => Inertia::render('units'))->name('units');
+        Route::get('payment-methods', fn () => Inertia::render('payment-methods'))->name('payment-methods');
+        Route::get('currencies', fn () => Inertia::render('currencies'))->name('currencies');
 
         // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
@@ -92,6 +102,27 @@ Route::middleware(['auth'])->group(function () {
         Route::post('registers', [RegisterController::class, 'store'])->name('registers.store');
         Route::put('registers/{register}', [RegisterController::class, 'update'])->name('registers.update');
         Route::delete('registers/{register}', [RegisterController::class, 'destroy'])->name('registers.destroy');
+
+        Route::get('taxes', [TaxController::class, 'index'])->name('taxes.index');
+        Route::post('taxes', [TaxController::class, 'store'])->name('taxes.store');
+        Route::put('taxes/{tax}', [TaxController::class, 'update'])->name('taxes.update');
+        Route::delete('taxes/{tax}', [TaxController::class, 'destroy'])->name('taxes.destroy');
+
+        Route::get('units/options', [UnitController::class, 'options'])->name('units.options');
+        Route::get('units', [UnitController::class, 'index'])->name('units.index');
+        Route::post('units', [UnitController::class, 'store'])->name('units.store');
+        Route::put('units/{unit}', [UnitController::class, 'update'])->name('units.update');
+        Route::delete('units/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
+
+        Route::get('payment-methods', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
+        Route::post('payment-methods', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
+        Route::put('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update'])->name('payment-methods.update');
+        Route::delete('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
+
+        Route::get('currencies', [CurrencyController::class, 'index'])->name('currencies.index');
+        Route::post('currencies', [CurrencyController::class, 'store'])->name('currencies.store');
+        Route::put('currencies/{currency}', [CurrencyController::class, 'update'])->name('currencies.update');
+        Route::delete('currencies/{currency}', [CurrencyController::class, 'destroy'])->name('currencies.destroy');
     });
 });
 

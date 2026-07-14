@@ -289,3 +289,104 @@ export interface RegisterFilters {
     direction: SortDirection;
     page: number;
 }
+
+/* -------------------------------------------------------------------------- */
+/* System Settings: Taxes, Units, Payment Methods, Currencies                 */
+/* -------------------------------------------------------------------------- */
+
+export type CurrencyStatus = 'active' | 'inactive';
+
+export interface Currency {
+    id: string;
+    code: string;
+    name: string;
+    symbol: string | null;
+    exchange_rate: string;
+    is_base: boolean;
+    status: CurrencyStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CurrencyFilters {
+    search: string;
+    status: CurrencyStatus | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export type TaxType = 'sales' | 'purchase' | 'both';
+export type TaxStatus = 'active' | 'inactive';
+
+export interface Tax {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    name: string;
+    rate: string;
+    type: TaxType;
+    is_inclusive: boolean;
+    status: TaxStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TaxFilters {
+    search: string;
+    status: TaxStatus | 'all';
+    company_id: string | 'all';
+    type: TaxType | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export interface Unit {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    name: string;
+    abbreviation: string;
+    base_unit_id: string | null;
+    base_unit?: { id: string; name: string } | null;
+    conversion_factor: string;
+    created_at: string;
+    updated_at: string;
+}
+
+/** Minimal unit reference used by selection inputs (e.g. the base-unit dropdown). */
+export interface UnitOption {
+    id: string;
+    name: string;
+    abbreviation: string;
+    company_id: string;
+}
+
+export interface UnitFilters {
+    search: string;
+    company_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export interface PaymentMethod {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    name: string;
+    type: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaymentMethodFilters {
+    search: string;
+    company_id: string | 'all';
+    is_active: 'all' | 'active' | 'inactive';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}

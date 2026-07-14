@@ -19,6 +19,8 @@ return new class extends Migration
             $table->decimal('exchange_rate', 14, 6)->default(1);
             $table->boolean('is_base')->default(false);
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

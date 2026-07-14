@@ -4,19 +4,27 @@ namespace App\Providers;
 
 use App\Repositories\Contracts\BranchRepositoryInterface;
 use App\Repositories\Contracts\CompanyRepositoryInterface;
+use App\Repositories\Contracts\CurrencyRepositoryInterface;
 use App\Repositories\Contracts\ModuleRepositoryInterface;
 use App\Repositories\Contracts\NavigationRepositoryInterface;
+use App\Repositories\Contracts\PaymentMethodRepositoryInterface;
 use App\Repositories\Contracts\PermissionRepositoryInterface;
 use App\Repositories\Contracts\RegisterRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Contracts\TaxRepositoryInterface;
+use App\Repositories\Contracts\UnitRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquent\BranchRepository;
 use App\Repositories\Eloquent\CompanyRepository;
+use App\Repositories\Eloquent\CurrencyRepository;
 use App\Repositories\Eloquent\ModuleRepository;
 use App\Repositories\Eloquent\NavigationRepository;
+use App\Repositories\Eloquent\PaymentMethodRepository;
 use App\Repositories\Eloquent\PermissionRepository;
 use App\Repositories\Eloquent\RegisterRepository;
 use App\Repositories\Eloquent\RoleRepository;
+use App\Repositories\Eloquent\TaxRepository;
+use App\Repositories\Eloquent\UnitRepository;
 use App\Repositories\Eloquent\UserRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,6 +45,10 @@ class RepositoryServiceProvider extends ServiceProvider
         CompanyRepositoryInterface::class => CompanyRepository::class,
         BranchRepositoryInterface::class => BranchRepository::class,
         RegisterRepositoryInterface::class => RegisterRepository::class,
+        CurrencyRepositoryInterface::class => CurrencyRepository::class,
+        TaxRepositoryInterface::class => TaxRepository::class,
+        UnitRepositoryInterface::class => UnitRepository::class,
+        PaymentMethodRepositoryInterface::class => PaymentMethodRepository::class,
     ];
 
     /**

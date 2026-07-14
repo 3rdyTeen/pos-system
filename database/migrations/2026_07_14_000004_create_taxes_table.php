@@ -19,6 +19,8 @@ return new class extends Migration
             $table->enum('type', ['sales', 'purchase', 'both'])->default('both');
             $table->boolean('is_inclusive')->default(false);
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
