@@ -17,6 +17,7 @@ export function useProductUnits(productId: string) {
         queryKey: productUnitKeys.list(productId),
         queryFn: () => api.get<{ data: ProductUnit[] }>(`/api/products/${productId}/units`),
         select: (response) => response.data,
+        enabled: productId !== '',
     });
 }
 

@@ -18,6 +18,7 @@ export function useProductBarcodes(productId: string) {
         queryKey: productBarcodeKeys.list(productId),
         queryFn: () => api.get<{ data: ProductBarcode[] }>(`/api/products/${productId}/barcodes`),
         select: (response) => response.data,
+        enabled: productId !== '',
     });
 }
 

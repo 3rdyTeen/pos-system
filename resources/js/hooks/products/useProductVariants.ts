@@ -19,6 +19,7 @@ export function useProductVariants(productId: string) {
         queryKey: productVariantKeys.list(productId),
         queryFn: () => api.get<{ data: ProductVariant[] }>(`/api/products/${productId}/variants`),
         select: (response) => response.data,
+        enabled: productId !== '',
     });
 }
 

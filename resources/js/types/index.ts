@@ -468,7 +468,7 @@ export interface ProductFilters {
     page: number;
 }
 
-/* Per-product sub-entities (managed on the product detail page). */
+/* Per-product sub-entities (managed inline in the product sheet, and on the product detail page). */
 
 export interface ProductVariant {
     id: string;
@@ -500,4 +500,46 @@ export interface ProductBarcode {
     unit?: { id: string; name: string } | null;
     barcode: string;
     is_primary: boolean;
+}
+
+/* Draft rows for the product sheet, where sub-entities are edited inline alongside
+   the product itself. A draft has no server id until it is saved, so rows are
+   identified by a client-generated `key` and barcodes reference their variant/unit
+   by that key. The keys are resolved to real ids at submit time (see useSaveProduct). */
+
+export interface DraftRow {
+    key: string;
+    id: string | null;
+}
+
+export interface AttributeRow {
+    key: string;
+    value: string;
+}
+
+export interface VariantDraft extends DraftRow {
+    variant_name: string;
+    sku: string;
+    attributes: AttributeRow[];
+    cost_price: string;
+    selling_price: string;
+}
+
+export interface UnitDraft extends DraftRow {
+    unit_id: string;
+    conversion_factor: string;
+    is_base_unit: boolean;
+}
+
+export interface BarcodeDraft extends DraftRow {
+    barcode: string;
+    variant_key: string | null;
+    unit_key: string | null;
+    is_primary: boolean;
+}
+
+export interface RemovedIds {
+    variants: string[];
+    units: string[];
+    barcodes: string[];
 }
