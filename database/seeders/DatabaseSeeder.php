@@ -23,34 +23,29 @@ class DatabaseSeeder extends Seeder
 
         $roles = $this->seedRoles();
 
-        // Administrator: full access to every module and permission.
+        // Administrator: full access to every module, including ones with no navigation.
         $this->grantAll($roles['admin'], $modules, $permissions);
 
-        // Editor: only the Inventory module with view access (demonstrates gating).
-        $this->grant($roles['editor'], $modules['inventory'], [$permissions['view']]);
-
-        // Modules registered by later data-migrations (System Settings, Catalog) are
-        // available to every role. Granted here too because migrations run before
-        // roles exist, so the migrations' own grant is a no-op on a fresh install.
-        $this->grantMigratedModulesToAllRoles($permissions);
+        // Every role gets every navigation-backed module. Mirrors the grant
+        // data-migration, which is a no-op on a fresh install because migrations run
+        // before any role exists.
+        $this->grantNavigationModulesToAllRoles($permissions);
 
         $this->seedUsers($roles['admin'], $roles['editor']);
     }
 
     /**
-     * Grant every role full access to the modules registered by data-migrations
-     * (System Settings + Catalog groups, Suppliers, Customers).
+     * Grant every role full access to every module that backs a navigation entry.
+     *
+     * Derived from the navigations table rather than a hand-kept list of codes, so a
+     * module registered by a future data-migration is picked up automatically.
      *
      * @param  array<string, Permission>  $permissions
      */
-    private function grantMigratedModulesToAllRoles(array $permissions): void
+    private function grantNavigationModulesToAllRoles(array $permissions): void
     {
         $modules = Module::query()
-            ->whereIn('code', [
-                'system_settings', 'taxes', 'units', 'payment_methods', 'currencies',
-                'catalog', 'products', 'product_categories',
-                'suppliers', 'customers',
-            ])
+            ->whereIn('id', Navigation::query()->whereNotNull('module_id')->distinct()->pluck('module_id'))
             ->get();
 
         foreach (Role::all() as $role) {
@@ -108,11 +103,13 @@ class DatabaseSeeder extends Seeder
 
         $modules = [];
         foreach ($definitions as $code => $name) {
-            $modules[$code] = Module::query()->create([
-                'name' => $name,
-                'code' => $code,
-                'is_enabled' => true,
-            ]);
+            // firstOrCreate, not create: data-migrations run before this seeder and
+            // may already have registered a module (the Inventory group does), and
+            // modules.code is unique.
+            $modules[$code] = Module::query()->firstOrCreate(
+                ['code' => $code],
+                ['name' => $name, 'is_enabled' => true],
+            );
         }
 
         return $modules;
@@ -133,14 +130,19 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($parentNavs as $index => [$name, $code, $url, $icon]) {
-            $parents[$code] = Navigation::query()->create([
-                'module_id' => $modules[$code]->id ?? null,
-                'name' => $name,
-                'code' => $code,
-                'url' => $url,
-                'icon' => $icon,
-                'order' => $index + 1,
-            ]);
+            // firstOrCreate for the same reason as the modules above: the Inventory
+            // node is already created by the inventory data-migration, and
+            // navigations.code is unique.
+            $parents[$code] = Navigation::query()->firstOrCreate(
+                ['code' => $code],
+                [
+                    'module_id' => $modules[$code]->id ?? null,
+                    'name' => $name,
+                    'url' => $url,
+                    'icon' => $icon,
+                    'order' => $index + 1,
+                ],
+            );
         }
 
         $childNavs = [
@@ -152,15 +154,17 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($childNavs as $index => [$name, $code, $parent, $url, $icon]) {
-            Navigation::query()->create([
-                'module_id' => $modules[$code]->id ?? null,
-                'parent_id' => $parents[$parent]->id ?? null,
-                'name' => $name,
-                'code' => $code,
-                'url' => $url,
-                'icon' => $icon,
-                'order' => 7 + $index,
-            ]);
+            Navigation::query()->firstOrCreate(
+                ['code' => $code],
+                [
+                    'module_id' => $modules[$code]->id ?? null,
+                    'parent_id' => $parents[$parent]->id ?? null,
+                    'name' => $name,
+                    'url' => $url,
+                    'icon' => $icon,
+                    'order' => 7 + $index,
+                ],
+            );
         }
     }
 

@@ -34,7 +34,13 @@ class RolePermissionSaveTest extends TestCase
         $this->authorization = app(AuthorizationService::class);
 
         $this->role = Role::factory()->create();
-        $this->module = Module::factory()->create(['code' => 'inventory']);
+        // `inventory` is registered by the inventory data-migration, which has already
+        // run under RefreshDatabase, and modules.code is unique — so adopt that row
+        // rather than trying to create a second one.
+        $this->module = Module::query()->firstOrCreate(
+            ['code' => 'inventory'],
+            ['name' => 'Inventory', 'is_enabled' => true],
+        );
         $this->view = Permission::factory()->create(['code' => 'view']);
         $this->create = Permission::factory()->create(['code' => 'create']);
     }

@@ -29,6 +29,16 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
+    /**
+     * Products for selection inputs.
+     */
+    public function options(Request $request): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->products->options($request->query('company_id')),
+        ]);
+    }
+
     public function store(StoreProductRequest $request): JsonResponse
     {
         $product = $this->service->create($request->validated());

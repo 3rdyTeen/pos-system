@@ -622,3 +622,167 @@ export interface CustomerFilters {
     direction: SortDirection;
     page: number;
 }
+
+/* Inventory */
+
+export interface ProductOption {
+    id: string;
+    name: string;
+    sku: string | null;
+    company_id: string;
+}
+
+export type WarehouseStatus = 'active' | 'inactive';
+
+export interface Warehouse {
+    id: string;
+    branch_id: string;
+    branch?: { id: string; name: string; company_id: string } | null;
+    name: string;
+    code: string | null;
+    address: string | null;
+    is_default: boolean;
+    status: WarehouseStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WarehouseOption {
+    id: string;
+    name: string;
+    code: string | null;
+    branch_id: string;
+}
+
+export interface WarehouseFilters {
+    search: string;
+    status: WarehouseStatus | 'all';
+    branch_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/**
+ * Derived stock level for a product in a warehouse. Read-only: rows are maintained
+ * by stock postings, and `quantity_available` is a generated column.
+ */
+export interface InventoryBalance {
+    id: string;
+    warehouse_id: string;
+    warehouse?: { id: string; name: string } | null;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null; reorder_level: string } | null;
+    product_variant_id: string | null;
+    variant?: { id: string; variant_name: string } | null;
+    quantity_on_hand: string;
+    quantity_reserved: string;
+    quantity_available: string;
+    average_cost: string;
+    last_counted_at: string | null;
+    updated_at: string | null;
+}
+
+export interface InventoryBalanceFilters {
+    search: string;
+    warehouse_id: string | 'all';
+    stock: 'all' | 'in_stock' | 'out_of_stock';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export type StockAdjustmentStatus = 'draft' | 'approved' | 'cancelled';
+
+export interface StockAdjustmentDetail {
+    id: string;
+    stock_adjustment_id: string;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null } | null;
+    product_variant_id: string | null;
+    variant?: { id: string; variant_name: string } | null;
+    system_qty: string;
+    counted_qty: string;
+    /** Generated column: counted_qty - system_qty. */
+    difference: string;
+    unit_cost: string;
+}
+
+export interface StockAdjustment {
+    id: string;
+    warehouse_id: string;
+    warehouse?: { id: string; name: string } | null;
+    adjustment_number: string;
+    reason: string | null;
+    status: StockAdjustmentStatus;
+    adjusted_by: string | null;
+    adjusted_by_user?: { id: string; name: string } | null;
+    adjustment_date: string | null;
+    notes: string | null;
+    details_count?: number;
+    details?: StockAdjustmentDetail[];
+    created_at: string;
+}
+
+export interface StockAdjustmentFilters {
+    search: string;
+    status: StockAdjustmentStatus | 'all';
+    warehouse_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export type StockTransferStatus = 'draft' | 'in_transit' | 'completed' | 'cancelled';
+
+export interface StockTransferDetail {
+    id: string;
+    stock_transfer_id: string;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null } | null;
+    product_variant_id: string | null;
+    variant?: { id: string; variant_name: string } | null;
+    quantity: string;
+    unit_cost: string;
+}
+
+export interface StockTransfer {
+    id: string;
+    from_warehouse_id: string;
+    from_warehouse?: { id: string; name: string } | null;
+    to_warehouse_id: string;
+    to_warehouse?: { id: string; name: string } | null;
+    transfer_number: string;
+    status: StockTransferStatus;
+    requested_by: string | null;
+    requested_by_user?: { id: string; name: string } | null;
+    approved_by: string | null;
+    transfer_date: string | null;
+    notes: string | null;
+    details_count?: number;
+    details?: StockTransferDetail[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockTransferFilters {
+    search: string;
+    status: StockTransferStatus | 'all';
+    warehouse_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/** Draft line for the adjustment/transfer sheets, keyed by client id like the product sheet. */
+export interface StockLineDraft {
+    key: string;
+    product_id: string;
+    product_variant_id: string | null;
+    /** Adjustments only. */
+    system_qty: string;
+    counted_qty: string;
+    /** Transfers only. */
+    quantity: string;
+    unit_cost: string;
+}

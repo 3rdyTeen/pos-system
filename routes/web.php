@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerGroupController;
+use App\Http\Controllers\Api\InventoryBalanceController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\PaymentMethodController;
@@ -16,10 +17,13 @@ use App\Http\Controllers\Api\ProductUnitController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\StockAdjustmentController;
+use App\Http\Controllers\Api\StockTransferController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TaxController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WarehouseController;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +70,12 @@ Route::middleware(['auth'])->group(function () {
         // Suppliers / Customers.
         Route::get('suppliers', fn () => Inertia::render('suppliers'))->name('suppliers');
         Route::get('customers', fn () => Inertia::render('customers'))->name('customers');
+
+        // Inventory module pages (Warehouses / Stock on hand / Adjustments / Transfers).
+        Route::get('warehouses', fn () => Inertia::render('warehouses'))->name('warehouses');
+        Route::get('stock-balances', fn () => Inertia::render('stock-balances'))->name('stock-balances');
+        Route::get('stock-adjustments', fn () => Inertia::render('stock-adjustments'))->name('stock-adjustments');
+        Route::get('stock-transfers', fn () => Inertia::render('stock-transfers'))->name('stock-transfers');
 
         // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
@@ -169,6 +179,28 @@ Route::middleware(['auth'])->group(function () {
         Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
+        Route::get('warehouses/options', [WarehouseController::class, 'options'])->name('warehouses.options');
+        Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+        Route::post('warehouses', [WarehouseController::class, 'store'])->name('warehouses.store');
+        Route::put('warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('warehouses.update');
+        Route::delete('warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->name('warehouses.destroy');
+
+        // Read-only: balances are derived from stock postings.
+        Route::get('inventory-balances', [InventoryBalanceController::class, 'index'])->name('inventory-balances.index');
+
+        Route::get('stock-adjustments', [StockAdjustmentController::class, 'index'])->name('stock-adjustments.index');
+        Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->name('stock-adjustments.store');
+        Route::get('stock-adjustments/{stockAdjustment}', [StockAdjustmentController::class, 'show'])->name('stock-adjustments.show');
+        Route::put('stock-adjustments/{stockAdjustment}', [StockAdjustmentController::class, 'update'])->name('stock-adjustments.update');
+        Route::delete('stock-adjustments/{stockAdjustment}', [StockAdjustmentController::class, 'destroy'])->name('stock-adjustments.destroy');
+
+        Route::get('stock-transfers', [StockTransferController::class, 'index'])->name('stock-transfers.index');
+        Route::post('stock-transfers', [StockTransferController::class, 'store'])->name('stock-transfers.store');
+        Route::get('stock-transfers/{stockTransfer}', [StockTransferController::class, 'show'])->name('stock-transfers.show');
+        Route::put('stock-transfers/{stockTransfer}', [StockTransferController::class, 'update'])->name('stock-transfers.update');
+        Route::delete('stock-transfers/{stockTransfer}', [StockTransferController::class, 'destroy'])->name('stock-transfers.destroy');
+
+        Route::get('products/options', [ProductController::class, 'options'])->name('products.options');
         Route::get('products', [ProductController::class, 'index'])->name('products.index');
         Route::post('products', [ProductController::class, 'store'])->name('products.store');
         Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');

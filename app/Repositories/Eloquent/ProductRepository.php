@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -71,5 +72,19 @@ class ProductRepository implements ProductRepositoryInterface
     public function delete(Product $product): void
     {
         $product->delete();
+    }
+
+    /**
+     * Products for selection inputs (e.g. stock document line items), optionally
+     * scoped to a company.
+     *
+     * @return Collection<int, Product>
+     */
+    public function options(?string $companyId = null): Collection
+    {
+        return Product::query()
+            ->when($companyId, fn ($query, string $id) => $query->where('company_id', $id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'sku', 'company_id']);
     }
 }
