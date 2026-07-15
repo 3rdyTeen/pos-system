@@ -543,3 +543,82 @@ export interface RemovedIds {
     units: string[];
     barcodes: string[];
 }
+
+/* Suppliers */
+
+export type SupplierStatus = 'active' | 'inactive';
+
+export interface Supplier {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    name: string;
+    contact_person: string | null;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    tax_id: string | null;
+    status: SupplierStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SupplierOption {
+    id: string;
+    name: string;
+    company_id: string;
+}
+
+export interface SupplierFilters {
+    search: string;
+    status: SupplierStatus | 'all';
+    company_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/* Customers */
+
+export type CustomerStatus = 'active' | 'inactive';
+
+export interface Customer {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    customer_group_id: string | null;
+    group?: { id: string; name: string } | null;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    tax_id: string | null;
+    credit_limit: string;
+    status: CustomerStatus;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CustomerOption {
+    id: string;
+    name: string;
+    company_id: string;
+}
+
+/** Customer groups are read-only for now — they only back the customer form dropdown. */
+export interface CustomerGroupOption {
+    id: string;
+    name: string;
+    company_id: string;
+    discount_percentage: string;
+}
+
+export interface CustomerFilters {
+    search: string;
+    status: CustomerStatus | 'all';
+    company_id: string | 'all';
+    customer_group_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}

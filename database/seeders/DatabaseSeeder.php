@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Grant every role full access to the modules registered by data-migrations
-     * (System Settings + Catalog groups).
+     * (System Settings + Catalog groups, Suppliers, Customers).
      *
      * @param  array<string, Permission>  $permissions
      */
@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             ->whereIn('code', [
                 'system_settings', 'taxes', 'units', 'payment_methods', 'currencies',
                 'catalog', 'products', 'product_categories',
+                'suppliers', 'customers',
             ])
             ->get();
 

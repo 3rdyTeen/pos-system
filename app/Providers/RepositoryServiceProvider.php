@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Repositories\Contracts\BranchRepositoryInterface;
 use App\Repositories\Contracts\CompanyRepositoryInterface;
 use App\Repositories\Contracts\CurrencyRepositoryInterface;
+use App\Repositories\Contracts\CustomerGroupRepositoryInterface;
+use App\Repositories\Contracts\CustomerRepositoryInterface;
 use App\Repositories\Contracts\ModuleRepositoryInterface;
 use App\Repositories\Contracts\NavigationRepositoryInterface;
 use App\Repositories\Contracts\PaymentMethodRepositoryInterface;
@@ -16,12 +18,15 @@ use App\Repositories\Contracts\ProductUnitRepositoryInterface;
 use App\Repositories\Contracts\ProductVariantRepositoryInterface;
 use App\Repositories\Contracts\RegisterRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Contracts\SupplierRepositoryInterface;
 use App\Repositories\Contracts\TaxRepositoryInterface;
 use App\Repositories\Contracts\UnitRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquent\BranchRepository;
 use App\Repositories\Eloquent\CompanyRepository;
 use App\Repositories\Eloquent\CurrencyRepository;
+use App\Repositories\Eloquent\CustomerGroupRepository;
+use App\Repositories\Eloquent\CustomerRepository;
 use App\Repositories\Eloquent\ModuleRepository;
 use App\Repositories\Eloquent\NavigationRepository;
 use App\Repositories\Eloquent\PaymentMethodRepository;
@@ -33,6 +38,7 @@ use App\Repositories\Eloquent\ProductUnitRepository;
 use App\Repositories\Eloquent\ProductVariantRepository;
 use App\Repositories\Eloquent\RegisterRepository;
 use App\Repositories\Eloquent\RoleRepository;
+use App\Repositories\Eloquent\SupplierRepository;
 use App\Repositories\Eloquent\TaxRepository;
 use App\Repositories\Eloquent\UnitRepository;
 use App\Repositories\Eloquent\UserRepository;
@@ -64,6 +70,9 @@ class RepositoryServiceProvider extends ServiceProvider
         ProductVariantRepositoryInterface::class => ProductVariantRepository::class,
         ProductUnitRepositoryInterface::class => ProductUnitRepository::class,
         ProductBarcodeRepositoryInterface::class => ProductBarcodeRepository::class,
+        SupplierRepositoryInterface::class => SupplierRepository::class,
+        CustomerRepositoryInterface::class => CustomerRepository::class,
+        CustomerGroupRepositoryInterface::class => CustomerGroupRepository::class,
     ];
 
     /**

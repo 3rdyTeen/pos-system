@@ -1,0 +1,254 @@
+import { SortableHeader } from '@/components/admin/sortable-header';
+import { TablePagination } from '@/components/admin/table-pagination';
+import { CustomerDeleteDialog } from '@/components/customers/customer-delete-dialog';
+import { CustomerSheet } from '@/components/customers/customer-sheet';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useCompanyOptions } from '@/hooks/companies/useCompanies';
+import { useCustomerGroupOptions } from '@/hooks/customerGroups/useCustomerGroups';
+import { useCustomers } from '@/hooks/customers/useCustomers';
+import AppLayout from '@/layouts/app-layout';
+import { Customer, CustomerFilters, type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
+import { AlertCircle, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Customers', href: '/customers' }];
+
+const COLUMN_COUNT = 7;
+
+const DEFAULT_FILTERS: CustomerFilters = {
+    search: '',
+    status: 'all',
+    company_id: 'all',
+    customer_group_id: 'all',
+    sort: 'created_at',
+    direction: 'desc',
+    page: 1,
+};
+
+export default function Customers() {
+    const [filters, setFilters] = useState<CustomerFilters>(DEFAULT_FILTERS);
+    const [searchInput, setSearchInput] = useState('');
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+
+    const { data, isPending, isError, isFetching, refetch } = useCustomers(filters);
+    const { data: companies = [] } = useCompanyOptions();
+    // Group filter options follow the company filter when one is selected.
+    const { data: groups = [] } = useCustomerGroupOptions(filters.company_id === 'all' ? undefined : filters.company_id);
+
+    useEffect(() => {
+        const handle = setTimeout(() => {
+            setFilters((prev) => (prev.search === searchInput ? prev : { ...prev, search: searchInput, page: 1 }));
+        }, 300);
+
+        return () => clearTimeout(handle);
+    }, [searchInput]);
+
+    const handleSort = (column: string) => {
+        setFilters((prev) => ({
+            ...prev,
+            sort: column,
+            direction: prev.sort === column && prev.direction === 'asc' ? 'desc' : 'asc',
+            page: 1,
+        }));
+    };
+
+    const openCreate = () => {
+        setEditingCustomer(null);
+        setSheetOpen(true);
+    };
+
+    const openEdit = (customer: Customer) => {
+        setEditingCustomer(customer);
+        setSheetOpen(true);
+    };
+
+    const customers = data?.data ?? [];
+    const isEmpty = !isPending && !isError && customers.length === 0;
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Customers" />
+
+            <div className="flex flex-col gap-4 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h1 className="text-xl font-semibold">Customers</h1>
+                        <p className="text-muted-foreground text-sm">Manage the customers you sell to.</p>
+                    </div>
+                    <Button onClick={openCreate}>
+                        <Plus className="h-4 w-4" />
+                        New customer
+                    </Button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative flex-1 md:max-w-xs">
+                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                        <Input
+                            placeholder="Search customers..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="pl-9"
+                        />
+                    </div>
+                    <Select
+                        value={filters.company_id}
+                        onValueChange={(value) => setFilters((prev) => ({ ...prev, company_id: value, customer_group_id: 'all', page: 1 }))}
+                    >
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="All companies" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All companies</SelectItem>
+                            {companies.map((company) => (
+                                <SelectItem key={company.id} value={company.id}>
+                                    {company.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={filters.customer_group_id}
+                        onValueChange={(value) => setFilters((prev) => ({ ...prev, customer_group_id: value, page: 1 }))}
+                    >
+                        <SelectTrigger className="w-44">
+                            <SelectValue placeholder="All groups" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All groups</SelectItem>
+                            {groups.map((group) => (
+                                <SelectItem key={group.id} value={group.id}>
+                                    {group.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={filters.status}
+                        onValueChange={(value: CustomerFilters['status']) => setFilters((prev) => ({ ...prev, status: value, page: 1 }))}
+                    >
+                        <SelectTrigger className="w-40">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All statuses</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="bg-card overflow-hidden rounded-lg border shadow-xs">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <SortableHeader label="Name" column="name" sort={filters.sort} direction={filters.direction} onSort={handleSort} />
+                                <TableHead>Company</TableHead>
+                                <TableHead>Group</TableHead>
+                                <SortableHeader label="Email" column="email" sort={filters.sort} direction={filters.direction} onSort={handleSort} />
+                                <SortableHeader
+                                    label="Credit limit"
+                                    column="credit_limit"
+                                    sort={filters.sort}
+                                    direction={filters.direction}
+                                    onSort={handleSort}
+                                />
+                                <SortableHeader
+                                    label="Status"
+                                    column="status"
+                                    sort={filters.sort}
+                                    direction={filters.direction}
+                                    onSort={handleSort}
+                                />
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isPending &&
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        {Array.from({ length: COLUMN_COUNT }).map((__, j) => (
+                                            <TableCell key={j}>
+                                                <Skeleton className="h-5 w-full" />
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))}
+
+                            {isError && (
+                                <TableRow>
+                                    <TableCell colSpan={COLUMN_COUNT}>
+                                        <Alert variant="destructive" className="border-0">
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertTitle>Failed to load customers</AlertTitle>
+                                            <AlertDescription className="flex items-center gap-3">
+                                                Something went wrong while fetching customers.
+                                                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                                                    Retry
+                                                </Button>
+                                            </AlertDescription>
+                                        </Alert>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+
+                            {isEmpty && (
+                                <TableRow>
+                                    <TableCell colSpan={COLUMN_COUNT} className="text-muted-foreground py-10 text-center">
+                                        No customers found. Create your first customer to get started.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+
+                            {customers.map((customer) => (
+                                <TableRow key={customer.id}>
+                                    <TableCell className="font-medium">{customer.name}</TableCell>
+                                    <TableCell className="text-muted-foreground">{customer.company?.name ?? '—'}</TableCell>
+                                    <TableCell className="text-muted-foreground">{customer.group?.name ?? '—'}</TableCell>
+                                    <TableCell className="text-muted-foreground">{customer.email || '—'}</TableCell>
+                                    <TableCell className="text-muted-foreground">{customer.credit_limit}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={customer.status === 'active' ? 'success' : 'secondary'} className="capitalize">
+                                            {customer.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button variant="ghost" size="icon" onClick={() => openEdit(customer)} aria-label="Edit customer">
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setDeletingCustomer(customer)}
+                                                aria-label="Delete customer"
+                                            >
+                                                <Trash2 className="text-destructive h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {data && (
+                    <TablePagination meta={data.meta} onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))} isFetching={isFetching} />
+                )}
+            </div>
+
+            <CustomerSheet open={sheetOpen} onOpenChange={setSheetOpen} customer={editingCustomer} />
+            <CustomerDeleteDialog customer={deletingCustomer} onOpenChange={(open) => !open && setDeletingCustomer(null)} />
+        </AppLayout>
+    );
+}

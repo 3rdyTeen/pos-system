@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CurrencyController;
+use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\CustomerGroupController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\PaymentMethodController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\Api\ProductUnitController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TaxController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\UserController;
@@ -59,6 +62,10 @@ Route::middleware(['auth'])->group(function () {
             ]);
         })->name('products.show');
         Route::get('product-categories', fn () => Inertia::render('product-categories'))->name('product-categories');
+
+        // Suppliers / Customers.
+        Route::get('suppliers', fn () => Inertia::render('suppliers'))->name('suppliers');
+        Route::get('customers', fn () => Inertia::render('customers'))->name('customers');
 
         // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
@@ -146,6 +153,21 @@ Route::middleware(['auth'])->group(function () {
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
         Route::put('product-categories/{productCategory}', [ProductCategoryController::class, 'update'])->name('product-categories.update');
         Route::delete('product-categories/{productCategory}', [ProductCategoryController::class, 'destroy'])->name('product-categories.destroy');
+
+        Route::get('suppliers/options', [SupplierController::class, 'options'])->name('suppliers.options');
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+
+        // Customer groups back the customer form's dropdown only (no CRUD page yet).
+        Route::get('customer-groups/options', [CustomerGroupController::class, 'options'])->name('customer-groups.options');
+
+        Route::get('customers/options', [CustomerController::class, 'options'])->name('customers.options');
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
+        Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
         Route::get('products', [ProductController::class, 'index'])->name('products.index');
         Route::post('products', [ProductController::class, 'store'])->name('products.store');
