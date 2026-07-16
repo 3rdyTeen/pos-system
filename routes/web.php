@@ -15,6 +15,9 @@ use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductUnitController;
 use App\Http\Controllers\Api\ProductVariantController;
+use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\PurchasePaymentController;
+use App\Http\Controllers\Api\PurchaseReturnController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\StockAdjustmentController;
@@ -76,6 +79,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('stock-balances', fn () => Inertia::render('stock-balances'))->name('stock-balances');
         Route::get('stock-adjustments', fn () => Inertia::render('stock-adjustments'))->name('stock-adjustments');
         Route::get('stock-transfers', fn () => Inertia::render('stock-transfers'))->name('stock-transfers');
+
+        // Purchasing module pages (Purchase orders / Returns).
+        Route::get('purchase-orders', fn () => Inertia::render('purchase-orders'))->name('purchase-orders');
+        Route::get('purchase-returns', fn () => Inertia::render('purchase-returns'))->name('purchase-returns');
 
         // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
@@ -148,6 +155,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('units/{unit}', [UnitController::class, 'update'])->name('units.update');
         Route::delete('units/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
 
+        Route::get('payment-methods/options', [PaymentMethodController::class, 'options'])->name('payment-methods.options');
         Route::get('payment-methods', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
         Route::post('payment-methods', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
         Route::put('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update'])->name('payment-methods.update');
@@ -178,6 +186,24 @@ Route::middleware(['auth'])->group(function () {
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
         Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        Route::get('purchase-orders/options', [PurchaseOrderController::class, 'options'])->name('purchase-orders.options');
+        Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+        Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
+        Route::get('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+        Route::put('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
+        Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+        Route::delete('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'destroy'])->name('purchase-orders.destroy');
+
+        Route::get('purchase-orders/{purchaseOrder}/payments', [PurchasePaymentController::class, 'index'])->name('purchase-orders.payments.index');
+        Route::post('purchase-orders/{purchaseOrder}/payments', [PurchasePaymentController::class, 'store'])->name('purchase-orders.payments.store');
+        Route::delete('purchase-payments/{purchasePayment}', [PurchasePaymentController::class, 'destroy'])->name('purchase-payments.destroy');
+
+        Route::get('purchase-returns', [PurchaseReturnController::class, 'index'])->name('purchase-returns.index');
+        Route::post('purchase-returns', [PurchaseReturnController::class, 'store'])->name('purchase-returns.store');
+        Route::get('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('purchase-returns.show');
+        Route::put('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'update'])->name('purchase-returns.update');
+        Route::delete('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'destroy'])->name('purchase-returns.destroy');
 
         Route::get('warehouses/options', [WarehouseController::class, 'options'])->name('warehouses.options');
         Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');

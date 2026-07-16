@@ -29,6 +29,16 @@ class PaymentMethodController extends Controller
         return PaymentMethodResource::collection($paymentMethods);
     }
 
+    /**
+     * Active payment methods for selection inputs.
+     */
+    public function options(Request $request): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->paymentMethods->options($request->query('company_id')),
+        ]);
+    }
+
     public function store(StorePaymentMethodRequest $request): JsonResponse
     {
         $paymentMethod = $this->service->create($request->validated());

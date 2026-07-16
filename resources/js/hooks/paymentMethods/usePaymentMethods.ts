@@ -1,12 +1,23 @@
 import { api } from '@/lib/api';
-import { Paginated, PaymentMethod, PaymentMethodFilters } from '@/types';
+import { Paginated, PaymentMethod, PaymentMethodFilters, PaymentMethodOption } from '@/types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 export const paymentMethodKeys = {
     all: ['payment-methods'] as const,
     lists: () => [...paymentMethodKeys.all, 'list'] as const,
     list: (filters: PaymentMethodFilters) => [...paymentMethodKeys.lists(), filters] as const,
+    options: (companyId?: string) => [...paymentMethodKeys.all, 'options', companyId ?? null] as const,
 };
+
+/** Active payment methods for selection inputs, optionally scoped to a company. */
+export function usePaymentMethodOptions(companyId?: string) {
+    return useQuery({
+        queryKey: paymentMethodKeys.options(companyId),
+        queryFn: () => api.get<{ data: PaymentMethodOption[] }>('/api/payment-methods/options', { company_id: companyId }),
+        select: (response) => response.data,
+        staleTime: 60_000,
+    });
+}
 
 export function usePaymentMethods(filters: PaymentMethodFilters) {
     return useQuery({

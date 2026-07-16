@@ -786,3 +786,153 @@ export interface StockLineDraft {
     quantity: string;
     unit_cost: string;
 }
+
+/* Purchasing */
+
+export interface PaymentMethodOption {
+    id: string;
+    name: string;
+    type: string | null;
+    company_id: string;
+}
+
+export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partially_received' | 'received' | 'cancelled';
+
+export interface PurchaseDetail {
+    id: string;
+    purchase_order_id: string;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null } | null;
+    product_variant_id: string | null;
+    variant?: { id: string; variant_name: string } | null;
+    quantity: string;
+    unit_cost: string;
+    tax_amount: string;
+    discount_amount: string;
+    /** Computed server-side: quantity x unit_cost + tax - discount. */
+    line_total: string;
+    received_qty: string;
+}
+
+export interface PurchaseOrder {
+    id: string;
+    branch_id: string;
+    branch?: { id: string; name: string } | null;
+    warehouse_id: string;
+    warehouse?: { id: string; name: string } | null;
+    supplier_id: string;
+    supplier?: { id: string; name: string } | null;
+    user_id: string;
+    po_number: string;
+    order_date: string | null;
+    expected_date: string | null;
+    /** All four totals are computed server-side from the lines. */
+    subtotal: string;
+    tax_total: string;
+    discount_total: string;
+    grand_total: string;
+    status: PurchaseOrderStatus;
+    notes: string | null;
+    details_count?: number;
+    details?: PurchaseDetail[];
+    payments?: PurchasePayment[];
+    paid_total?: string;
+    balance?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PurchaseOrderOption {
+    id: string;
+    po_number: string;
+    supplier_id: string;
+    branch_id: string;
+}
+
+export interface PurchaseOrderFilters {
+    search: string;
+    status: PurchaseOrderStatus | 'all';
+    supplier_id: string | 'all';
+    warehouse_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export interface PurchasePayment {
+    id: string;
+    purchase_order_id: string;
+    payment_method_id: string;
+    payment_method?: { id: string; name: string } | null;
+    amount: string;
+    reference_number: string | null;
+    paid_at: string | null;
+    paid_by: string | null;
+    paid_by_user?: { id: string; name: string } | null;
+    created_at: string;
+}
+
+export type PurchaseReturnStatus = 'pending' | 'completed' | 'cancelled';
+
+export interface PurchaseReturnDetail {
+    id: string;
+    purchase_return_id: string;
+    purchase_detail_id: string | null;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null } | null;
+    product_variant_id: string | null;
+    variant?: { id: string; variant_name: string } | null;
+    quantity: string;
+    unit_cost: string;
+    /** Computed server-side: quantity x unit_cost. */
+    line_total: string;
+}
+
+export interface PurchaseReturn {
+    id: string;
+    purchase_order_id: string;
+    purchase_order?: { id: string; po_number: string; supplier?: { id: string; name: string } | null } | null;
+    branch_id: string;
+    branch?: { id: string; name: string } | null;
+    user_id: string;
+    user?: { id: string; name: string } | null;
+    return_number: string;
+    return_date: string | null;
+    reason: string | null;
+    /** Computed server-side from the lines. */
+    total_amount: string;
+    status: PurchaseReturnStatus;
+    details_count?: number;
+    details?: PurchaseReturnDetail[];
+    created_at: string;
+}
+
+export interface PurchaseReturnFilters {
+    search: string;
+    status: PurchaseReturnStatus | 'all';
+    purchase_order_id: string | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/** Draft line for the purchase order sheet. */
+export interface PurchaseLineDraft {
+    key: string;
+    product_id: string;
+    product_variant_id: string | null;
+    quantity: string;
+    unit_cost: string;
+    tax_amount: string;
+    discount_amount: string;
+}
+
+/** Draft line for the purchase return sheet. */
+export interface PurchaseReturnLineDraft {
+    key: string;
+    purchase_detail_id: string | null;
+    product_id: string;
+    product_variant_id: string | null;
+    quantity: string;
+    unit_cost: string;
+}

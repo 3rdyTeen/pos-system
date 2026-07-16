@@ -17,6 +17,9 @@ use App\Repositories\Contracts\ProductCategoryRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ProductUnitRepositoryInterface;
 use App\Repositories\Contracts\ProductVariantRepositoryInterface;
+use App\Repositories\Contracts\PurchaseOrderRepositoryInterface;
+use App\Repositories\Contracts\PurchasePaymentRepositoryInterface;
+use App\Repositories\Contracts\PurchaseReturnRepositoryInterface;
 use App\Repositories\Contracts\RegisterRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\StockAdjustmentRepositoryInterface;
@@ -41,6 +44,9 @@ use App\Repositories\Eloquent\ProductCategoryRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\ProductUnitRepository;
 use App\Repositories\Eloquent\ProductVariantRepository;
+use App\Repositories\Eloquent\PurchaseOrderRepository;
+use App\Repositories\Eloquent\PurchasePaymentRepository;
+use App\Repositories\Eloquent\PurchaseReturnRepository;
 use App\Repositories\Eloquent\RegisterRepository;
 use App\Repositories\Eloquent\RoleRepository;
 use App\Repositories\Eloquent\StockAdjustmentRepository;
@@ -85,6 +91,9 @@ class RepositoryServiceProvider extends ServiceProvider
         InventoryBalanceRepositoryInterface::class => InventoryBalanceRepository::class,
         StockAdjustmentRepositoryInterface::class => StockAdjustmentRepository::class,
         StockTransferRepositoryInterface::class => StockTransferRepository::class,
+        PurchaseOrderRepositoryInterface::class => PurchaseOrderRepository::class,
+        PurchasePaymentRepositoryInterface::class => PurchasePaymentRepository::class,
+        PurchaseReturnRepositoryInterface::class => PurchaseReturnRepository::class,
     ];
 
     /**

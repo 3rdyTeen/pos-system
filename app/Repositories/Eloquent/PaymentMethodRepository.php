@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\PaymentMethod;
 use App\Repositories\Contracts\PaymentMethodRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class PaymentMethodRepository implements PaymentMethodRepositoryInterface
 {
@@ -64,5 +65,19 @@ class PaymentMethodRepository implements PaymentMethodRepositoryInterface
     public function delete(PaymentMethod $paymentMethod): void
     {
         $paymentMethod->delete();
+    }
+
+    /**
+     * Active payment methods for selection inputs, optionally scoped to a company.
+     *
+     * @return Collection<int, PaymentMethod>
+     */
+    public function options(?string $companyId = null): Collection
+    {
+        return PaymentMethod::query()
+            ->where('is_active', true)
+            ->when($companyId, fn ($query, string $id) => $query->where('company_id', $id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'company_id']);
     }
 }

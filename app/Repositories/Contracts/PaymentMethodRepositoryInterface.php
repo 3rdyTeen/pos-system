@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts;
 
 use App\Models\PaymentMethod;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 interface PaymentMethodRepositoryInterface
 {
@@ -26,4 +27,11 @@ interface PaymentMethodRepositoryInterface
     public function update(PaymentMethod $paymentMethod, array $data): PaymentMethod;
 
     public function delete(PaymentMethod $paymentMethod): void;
+
+    /**
+     * Active payment methods for selection inputs, optionally scoped to a company.
+     *
+     * @return Collection<int, PaymentMethod>
+     */
+    public function options(?string $companyId = null): Collection;
 }
