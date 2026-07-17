@@ -48,6 +48,7 @@ class ProductResource extends JsonResource
             'selling_price' => $this->selling_price,
             'reorder_level' => $this->reorder_level,
             'is_active' => $this->is_active,
+            'is_combo' => $this->is_combo,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

@@ -1,4 +1,6 @@
 import { ProductBarcodesSection } from '@/components/products/product-barcodes-section';
+import { ProductComboSection } from '@/components/products/product-combo-section';
+import { ProductModifiersSection } from '@/components/products/product-modifiers-section';
 import { ProductUnitsSection } from '@/components/products/product-units-section';
 import { ProductVariantsSection } from '@/components/products/product-variants-section';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +65,11 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     </CardContent>
                 </Card>
 
+                {/* Only meaningful for a combo: a slot on a plain product would never
+                    be read, so showing the editor would just invite confusion. */}
+                {product.is_combo && <ProductComboSection productId={product.id} />}
+
+                <ProductModifiersSection productId={product.id} />
                 <ProductVariantsSection productId={product.id} />
                 <ProductUnitsSection productId={product.id} companyId={product.company_id} />
                 <ProductBarcodesSection productId={product.id} />

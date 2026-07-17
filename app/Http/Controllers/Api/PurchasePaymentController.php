@@ -10,7 +10,6 @@ use App\Models\PurchasePayment;
 use App\Repositories\Contracts\PurchasePaymentRepositoryInterface;
 use App\Services\PurchasePaymentService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PurchasePaymentController extends Controller

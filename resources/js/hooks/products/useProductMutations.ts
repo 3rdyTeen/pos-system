@@ -16,6 +16,8 @@ export interface ProductPayload {
     selling_price: string;
     reorder_level: string;
     is_active: boolean;
+    /** A combo has no stock of its own; its components are what get deducted. */
+    is_combo: boolean;
 }
 
 export function useCreateProduct() {

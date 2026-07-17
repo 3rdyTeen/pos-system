@@ -90,6 +90,15 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         return $warehouse->balances()->count();
     }
 
+    public function defaultForBranch(string $branchId): ?string
+    {
+        return Warehouse::query()
+            ->where('branch_id', $branchId)
+            ->where('status', 'active')
+            ->orderByDesc('is_default')
+            ->value('id');
+    }
+
     /**
      * Warehouses for selection inputs, optionally scoped to a branch.
      *

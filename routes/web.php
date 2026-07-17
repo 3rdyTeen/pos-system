@@ -1,18 +1,24 @@
 <?php
 
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\ComboSlotController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerGroupController;
+use App\Http\Controllers\Api\FeatureControlController;
 use App\Http\Controllers\Api\InventoryBalanceController;
+use App\Http\Controllers\Api\ModifierGroupController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PosProfileController;
+use App\Http\Controllers\Api\PosTerminalController;
 use App\Http\Controllers\Api\ProductBarcodeController;
 use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductModifierController;
 use App\Http\Controllers\Api\ProductUnitController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\PurchaseOrderController;
@@ -20,6 +26,9 @@ use App\Http\Controllers\Api\PurchasePaymentController;
 use App\Http\Controllers\Api\PurchaseReturnController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\SalesReturnController;
+use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\StockTransferController;
 use App\Http\Controllers\Api\SupplierController;
@@ -60,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('units', fn () => Inertia::render('units'))->name('units');
         Route::get('payment-methods', fn () => Inertia::render('payment-methods'))->name('payment-methods');
         Route::get('currencies', fn () => Inertia::render('currencies'))->name('currencies');
+        Route::get('feature-controls', fn () => Inertia::render('feature-controls'))->name('feature-controls');
 
         // Catalog module pages (Products / Categories).
         Route::get('products', fn () => Inertia::render('products'))->name('products');
@@ -69,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
             ]);
         })->name('products.show');
         Route::get('product-categories', fn () => Inertia::render('product-categories'))->name('product-categories');
+        Route::get('modifier-groups', fn () => Inertia::render('modifier-groups'))->name('modifier-groups');
 
         // Suppliers / Customers.
         Route::get('suppliers', fn () => Inertia::render('suppliers'))->name('suppliers');
@@ -84,9 +95,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('purchase-orders', fn () => Inertia::render('purchase-orders'))->name('purchase-orders');
         Route::get('purchase-returns', fn () => Inertia::render('purchase-returns'))->name('purchase-returns');
 
-        // Demo business-module landing pages (seeded modules Inventory/Sales/Reports).
+        // Sales module pages (Terminal / History / Returns / Terminal profiles).
+        Route::get('pos', fn () => Inertia::render('pos'))->name('pos');
+        Route::get('sales-history', fn () => Inertia::render('sales-history'))->name('sales-history');
+        Route::get('sales-returns', fn () => Inertia::render('sales-returns'))->name('sales-returns');
+        Route::get('pos-profiles', fn () => Inertia::render('pos-profiles'))->name('pos-profiles');
+
+        // Demo business-module landing pages (seeded modules Inventory/Reports).
+        // `sales` is now a grouping node with children rather than a page of its own,
+        // so it no longer needs a placeholder — see the seed_pos_modules migration.
         Route::get('inventory', fn () => Inertia::render('placeholder', ['module' => 'Inventory']))->name('inventory');
-        Route::get('sales', fn () => Inertia::render('placeholder', ['module' => 'Sales']))->name('sales');
         Route::get('reports', fn () => Inertia::render('placeholder', ['module' => 'Reports']))->name('reports');
     });
 
@@ -205,6 +223,53 @@ Route::middleware(['auth'])->group(function () {
         Route::put('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'update'])->name('purchase-returns.update');
         Route::delete('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'destroy'])->name('purchase-returns.destroy');
 
+        // Company capability switches. Not page access — that is the module tree.
+        Route::get('feature-controls', [FeatureControlController::class, 'index'])->name('feature-controls.index');
+        Route::put('feature-controls', [FeatureControlController::class, 'update'])->name('feature-controls.update');
+
+        // POS terminal. `context` boots the screen; `lookup` resolves a scan.
+        Route::get('pos/context', [PosTerminalController::class, 'context'])->name('pos.context');
+        Route::get('pos/products', [PosTerminalController::class, 'products'])->name('pos.products');
+        Route::get('pos/lookup', [PosTerminalController::class, 'lookup'])->name('pos.lookup');
+        // The choices a product offers, fetched when the cashier taps it.
+        Route::get('pos/products/{product}/configuration', [PosTerminalController::class, 'configuration'])->name('pos.configuration');
+
+        Route::get('modifier-groups/options', [ModifierGroupController::class, 'options'])->name('modifier-groups.options');
+        Route::get('modifier-groups', [ModifierGroupController::class, 'index'])->name('modifier-groups.index');
+        Route::post('modifier-groups', [ModifierGroupController::class, 'store'])->name('modifier-groups.store');
+        Route::get('modifier-groups/{modifierGroup}', [ModifierGroupController::class, 'show'])->name('modifier-groups.show');
+        Route::put('modifier-groups/{modifierGroup}', [ModifierGroupController::class, 'update'])->name('modifier-groups.update');
+        Route::delete('modifier-groups/{modifierGroup}', [ModifierGroupController::class, 'destroy'])->name('modifier-groups.destroy');
+
+        Route::get('pos-profiles/options', [PosProfileController::class, 'options'])->name('pos-profiles.options');
+        Route::get('pos-profiles', [PosProfileController::class, 'index'])->name('pos-profiles.index');
+        Route::post('pos-profiles', [PosProfileController::class, 'store'])->name('pos-profiles.store');
+        Route::put('pos-profiles/{posProfile}', [PosProfileController::class, 'update'])->name('pos-profiles.update');
+        Route::delete('pos-profiles/{posProfile}', [PosProfileController::class, 'destroy'])->name('pos-profiles.destroy');
+
+        // Drawer sessions. `current` answers "is a till already open on this register?".
+        Route::get('shifts/current', [ShiftController::class, 'current'])->name('shifts.current');
+        Route::post('shifts', [ShiftController::class, 'open'])->name('shifts.open');
+        Route::get('shifts/{shift}', [ShiftController::class, 'show'])->name('shifts.show');
+        Route::post('shifts/{shift}/close', [ShiftController::class, 'close'])->name('shifts.close');
+
+        // Static segments are declared before {sale} so they are not swallowed by it.
+        Route::get('sales/options', [SaleController::class, 'options'])->name('sales.options');
+        Route::get('sales/held', [SaleController::class, 'held'])->name('sales.held');
+        Route::get('sales', [SaleController::class, 'index'])->name('sales.index');
+        Route::post('sales', [SaleController::class, 'store'])->name('sales.store');
+        Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
+        Route::put('sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
+        Route::post('sales/{sale}/complete', [SaleController::class, 'complete'])->name('sales.complete');
+        Route::post('sales/{sale}/void', [SaleController::class, 'void'])->name('sales.void');
+        Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
+
+        Route::get('sales-returns', [SalesReturnController::class, 'index'])->name('sales-returns.index');
+        Route::post('sales-returns', [SalesReturnController::class, 'store'])->name('sales-returns.store');
+        Route::get('sales-returns/{salesReturn}', [SalesReturnController::class, 'show'])->name('sales-returns.show');
+        Route::put('sales-returns/{salesReturn}', [SalesReturnController::class, 'update'])->name('sales-returns.update');
+        Route::delete('sales-returns/{salesReturn}', [SalesReturnController::class, 'destroy'])->name('sales-returns.destroy');
+
         Route::get('warehouses/options', [WarehouseController::class, 'options'])->name('warehouses.options');
         Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
         Route::post('warehouses', [WarehouseController::class, 'store'])->name('warehouses.store');
@@ -242,6 +307,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('products/{product}/units', [ProductUnitController::class, 'store'])->name('products.units.store');
         Route::put('product-units/{productUnit}', [ProductUnitController::class, 'update'])->name('product-units.update');
         Route::delete('product-units/{productUnit}', [ProductUnitController::class, 'destroy'])->name('product-units.destroy');
+
+        // Modifiers and combo components, managed on the product detail page.
+        Route::get('products/{product}/modifier-groups', [ProductModifierController::class, 'index'])->name('products.modifier-groups.index');
+        Route::put('products/{product}/modifier-groups', [ProductModifierController::class, 'sync'])->name('products.modifier-groups.sync');
+
+        Route::get('products/{product}/combo-slots', [ComboSlotController::class, 'index'])->name('products.combo-slots.index');
+        Route::put('products/{product}/combo-slots', [ComboSlotController::class, 'sync'])->name('products.combo-slots.sync');
 
         Route::get('products/{product}/barcodes', [ProductBarcodeController::class, 'index'])->name('products.barcodes.index');
         Route::post('products/{product}/barcodes', [ProductBarcodeController::class, 'store'])->name('products.barcodes.store');

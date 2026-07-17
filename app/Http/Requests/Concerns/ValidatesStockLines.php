@@ -6,7 +6,8 @@ use App\Models\ProductVariant;
 use Closure;
 
 /**
- * Shared line-item rules for documents that carry a `details` array of stock lines.
+ * Shared line-item rules for documents that carry an array of stock lines,
+ * whatever that array is called (`details` on a purchase, `lines` on a sale).
  */
 trait ValidatesStockLines
 {
@@ -23,9 +24,10 @@ trait ValidatesStockLines
                 return;
             }
 
-            // $attribute looks like "details.0.product_variant_id".
-            $index = explode('.', $attribute)[1] ?? null;
-            $productId = $index === null ? null : $this->input("details.{$index}.product_id");
+            // $attribute looks like "details.0.product_variant_id" or
+            // "lines.0.product_variant_id" — take the sibling product_id either way.
+            [$prefix, $index] = array_pad(explode('.', $attribute), 2, null);
+            $productId = $index === null ? null : $this->input("{$prefix}.{$index}.product_id");
 
             if (! $productId) {
                 return;

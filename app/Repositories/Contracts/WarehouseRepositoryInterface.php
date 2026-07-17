@@ -36,6 +36,13 @@ interface WarehouseRepositoryInterface
     public function balancesCount(Warehouse $warehouse): int;
 
     /**
+     * The warehouse a branch's stock moves through: its default, or its only active
+     * one. Shared by the terminal (to show stock) and SaleService (to deduct it), so
+     * that what the cashier sees and what gets taken are the same warehouse.
+     */
+    public function defaultForBranch(string $branchId): ?string;
+
+    /**
      * Warehouses for selection inputs, optionally scoped to a branch.
      *
      * @return Collection<int, Warehouse>

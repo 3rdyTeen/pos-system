@@ -28,6 +28,9 @@ class StoreProductRequest extends FormRequest
             'selling_price' => ['required', 'numeric', 'min:0'],
             'reorder_level' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
+            // A combo carries no stock of its own: its slots resolve to real products
+            // and those are what get deducted. The components are managed separately.
+            'is_combo' => ['boolean'],
         ];
     }
 }

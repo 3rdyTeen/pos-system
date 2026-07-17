@@ -85,6 +85,8 @@ class ProductRepository implements ProductRepositoryInterface
         return Product::query()
             ->when($companyId, fn ($query, string $id) => $query->where('company_id', $id))
             ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'company_id']);
+            // is_combo is reported so callers can exclude combos where nesting one
+            // would be rejected anyway, such as a combo's own component picker.
+            ->get(['id', 'name', 'sku', 'company_id', 'is_combo']);
     }
 }

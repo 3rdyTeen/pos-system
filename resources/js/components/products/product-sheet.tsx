@@ -55,6 +55,7 @@ export function ProductSheet({ open, onOpenChange, product }: ProductSheetProps)
     const [sellingPrice, setSellingPrice] = useState('0');
     const [reorderLevel, setReorderLevel] = useState('0');
     const [isActive, setIsActive] = useState(true);
+    const [isCombo, setIsCombo] = useState(false);
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     const [variants, setVariants] = useState<VariantDraft[]>([]);
@@ -99,6 +100,7 @@ export function ProductSheet({ open, onOpenChange, product }: ProductSheetProps)
             setSellingPrice(product?.selling_price ?? '0');
             setReorderLevel(product?.reorder_level ?? '0');
             setIsActive(product?.is_active ?? true);
+            setIsCombo(product?.is_combo ?? false);
             setErrors({});
 
             setVariants([]);
@@ -232,6 +234,7 @@ export function ProductSheet({ open, onOpenChange, product }: ProductSheetProps)
                 selling_price: sellingPrice,
                 reorder_level: reorderLevel,
                 is_active: isActive,
+                is_combo: isCombo,
             },
             variants,
             units,
@@ -475,6 +478,17 @@ export function ProductSheet({ open, onOpenChange, product }: ProductSheetProps)
                                         <p className="text-muted-foreground text-sm">Available for sale.</p>
                                     </div>
                                     <Switch id="product-active" checked={isActive} onCheckedChange={setIsActive} />
+                                </div>
+
+                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="product-combo">Combo meal</Label>
+                                        <p className="text-muted-foreground text-sm">
+                                            A bundle of other products. It holds no stock of its own — its components do. Set those up on the
+                                            product's page after saving.
+                                        </p>
+                                    </div>
+                                    <Switch id="product-combo" checked={isCombo} onCheckedChange={setIsCombo} />
                                 </div>
                             </TabsContent>
 

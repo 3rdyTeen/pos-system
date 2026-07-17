@@ -28,6 +28,7 @@ class UpdateProductRequest extends FormRequest
             'selling_price' => ['required', 'numeric', 'min:0'],
             'reorder_level' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
+            'is_combo' => ['boolean'],
         ];
     }
 }

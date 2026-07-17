@@ -8,10 +8,12 @@ use App\Repositories\Contracts\CurrencyRepositoryInterface;
 use App\Repositories\Contracts\CustomerGroupRepositoryInterface;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
 use App\Repositories\Contracts\InventoryBalanceRepositoryInterface;
+use App\Repositories\Contracts\ModifierGroupRepositoryInterface;
 use App\Repositories\Contracts\ModuleRepositoryInterface;
 use App\Repositories\Contracts\NavigationRepositoryInterface;
 use App\Repositories\Contracts\PaymentMethodRepositoryInterface;
 use App\Repositories\Contracts\PermissionRepositoryInterface;
+use App\Repositories\Contracts\PosProfileRepositoryInterface;
 use App\Repositories\Contracts\ProductBarcodeRepositoryInterface;
 use App\Repositories\Contracts\ProductCategoryRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
@@ -22,6 +24,8 @@ use App\Repositories\Contracts\PurchasePaymentRepositoryInterface;
 use App\Repositories\Contracts\PurchaseReturnRepositoryInterface;
 use App\Repositories\Contracts\RegisterRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Contracts\SaleRepositoryInterface;
+use App\Repositories\Contracts\SalesReturnRepositoryInterface;
 use App\Repositories\Contracts\StockAdjustmentRepositoryInterface;
 use App\Repositories\Contracts\StockTransferRepositoryInterface;
 use App\Repositories\Contracts\SupplierRepositoryInterface;
@@ -35,10 +39,12 @@ use App\Repositories\Eloquent\CurrencyRepository;
 use App\Repositories\Eloquent\CustomerGroupRepository;
 use App\Repositories\Eloquent\CustomerRepository;
 use App\Repositories\Eloquent\InventoryBalanceRepository;
+use App\Repositories\Eloquent\ModifierGroupRepository;
 use App\Repositories\Eloquent\ModuleRepository;
 use App\Repositories\Eloquent\NavigationRepository;
 use App\Repositories\Eloquent\PaymentMethodRepository;
 use App\Repositories\Eloquent\PermissionRepository;
+use App\Repositories\Eloquent\PosProfileRepository;
 use App\Repositories\Eloquent\ProductBarcodeRepository;
 use App\Repositories\Eloquent\ProductCategoryRepository;
 use App\Repositories\Eloquent\ProductRepository;
@@ -49,6 +55,8 @@ use App\Repositories\Eloquent\PurchasePaymentRepository;
 use App\Repositories\Eloquent\PurchaseReturnRepository;
 use App\Repositories\Eloquent\RegisterRepository;
 use App\Repositories\Eloquent\RoleRepository;
+use App\Repositories\Eloquent\SaleRepository;
+use App\Repositories\Eloquent\SalesReturnRepository;
 use App\Repositories\Eloquent\StockAdjustmentRepository;
 use App\Repositories\Eloquent\StockTransferRepository;
 use App\Repositories\Eloquent\SupplierRepository;
@@ -94,6 +102,10 @@ class RepositoryServiceProvider extends ServiceProvider
         PurchaseOrderRepositoryInterface::class => PurchaseOrderRepository::class,
         PurchasePaymentRepositoryInterface::class => PurchasePaymentRepository::class,
         PurchaseReturnRepositoryInterface::class => PurchaseReturnRepository::class,
+        SaleRepositoryInterface::class => SaleRepository::class,
+        SalesReturnRepositoryInterface::class => SalesReturnRepository::class,
+        PosProfileRepositoryInterface::class => PosProfileRepository::class,
+        ModifierGroupRepositoryInterface::class => ModifierGroupRepository::class,
     ];
 
     /**

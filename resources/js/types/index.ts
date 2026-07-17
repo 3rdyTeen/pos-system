@@ -454,6 +454,8 @@ export interface Product {
     selling_price: string;
     reorder_level: string;
     is_active: boolean;
+    /** A combo has no stock of its own; its components are what get deducted. */
+    is_combo: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -630,6 +632,7 @@ export interface ProductOption {
     name: string;
     sku: string | null;
     company_id: string;
+    is_combo: boolean;
 }
 
 export type WarehouseStatus = 'active' | 'inactive';
@@ -935,4 +938,462 @@ export interface PurchaseReturnLineDraft {
     product_variant_id: string | null;
     quantity: string;
     unit_cost: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sales: POS terminal, Sales, Returns, Terminal profiles                     */
+/* -------------------------------------------------------------------------- */
+
+export type SaleStatus = 'draft' | 'completed' | 'void' | 'held';
+export type SalePaymentStatus = 'unpaid' | 'partial' | 'paid';
+
+/** How the cashier finds a product. Groceries scan, fast food taps tiles. */
+export type PickingMode = 'barcode' | 'tiles' | 'hybrid';
+export type OrderType = 'retail' | 'dine_in' | 'takeout' | 'delivery';
+
+export interface SalesDetail {
+    id: string;
+    sale_id: string;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null } | null;
+    product_variant_id: string | null;
+    variant?: { id: string; name: string } | null;
+    unit_id: string | null;
+    unit?: { id: string; name: string } | null;
+    quantity: string;
+    /** All-in: the catalogue price plus every modifier and component surcharge. */
+    unit_price: string;
+    discount_amount: string;
+    tax_amount: string;
+    /** Computed server-side: quantity x unit_price - discount, plus tax when the tax is not inclusive. */
+    line_total: string;
+    /** The choices made against this line, as they were sold. */
+    modifiers?: SoldModifier[];
+    /** What a combo line resolved to. Empty for a plain product. */
+    components?: SoldComponent[];
+}
+
+export interface SoldModifier {
+    id: string;
+    modifier_group_id: string | null;
+    modifier_option_id?: string | null;
+    group_name: string | null;
+    name: string;
+    price_delta: string;
+    product_id: string | null;
+}
+
+export interface SoldComponent {
+    id: string;
+    combo_slot_id: string | null;
+    slot_option_id: string | null;
+    slot_name: string | null;
+    name: string;
+    product_id: string;
+    quantity: string;
+    price_delta: string;
+}
+
+export interface SalePayment {
+    id: string;
+    sale_id: string;
+    payment_method_id: string;
+    payment_method?: { id: string; name: string; type: string | null } | null;
+    amount: string;
+    reference_number: string | null;
+    paid_at: string | null;
+    received_by: string | null;
+    created_at: string | null;
+}
+
+export interface SaleTax {
+    id: string;
+    sale_id: string;
+    sales_detail_id: string | null;
+    tax_id: string;
+    /** Copied off the tax when the sale was rung up, so a later rate change does not rewrite history. */
+    tax_name: string | null;
+    rate: string | null;
+    taxable_amount: string | null;
+    tax_amount: string | null;
+}
+
+export interface Sale {
+    id: string;
+    branch_id: string;
+    branch?: { id: string; name: string } | null;
+    warehouse_id: string | null;
+    warehouse?: { id: string; name: string } | null;
+    register_id: string | null;
+    register?: { id: string; name: string } | null;
+    shift_id: string | null;
+    customer_id: string | null;
+    customer?: { id: string; name: string } | null;
+    user_id: string;
+    user?: { id: string; name: string } | null;
+    sale_number: string;
+    sale_date: string | null;
+    order_type: string | null;
+    subtotal: string;
+    discount_total: string;
+    tax_total: string;
+    grand_total: string;
+    amount_paid: string;
+    amount_due: string;
+    status: SaleStatus;
+    payment_status: SalePaymentStatus;
+    notes: string | null;
+    details_count?: number;
+    details?: SalesDetail[];
+    payments?: SalePayment[];
+    taxes?: SaleTax[];
+    created_at: string | null;
+    updated_at: string | null;
+}
+
+export interface SaleFilters {
+    search: string;
+    status: SaleStatus | 'all';
+    payment_status: SalePaymentStatus | 'all';
+    register_id: string | 'all';
+    from: string;
+    to: string;
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+export interface SaleOption {
+    id: string;
+    sale_number: string;
+    customer_id: string | null;
+    branch_id: string;
+    grand_total: string;
+    sale_date: string | null;
+}
+
+/* Sales returns */
+
+export type SalesReturnStatus = 'pending' | 'completed' | 'cancelled';
+
+export interface SalesReturnDetail {
+    id: string;
+    sales_return_id: string;
+    sales_detail_id: string | null;
+    product_id: string;
+    product?: { id: string; name: string; sku: string | null } | null;
+    product_variant_id: string | null;
+    quantity: string;
+    /** Taken from the original sale line: a refund pays back what was charged. */
+    unit_price: string;
+    line_total: string;
+}
+
+export interface SalesReturn {
+    id: string;
+    sale_id: string;
+    sale?: { id: string; sale_number: string; customer?: { id: string; name: string } | null } | null;
+    branch_id: string;
+    branch?: { id: string; name: string } | null;
+    user_id: string;
+    user?: { id: string; name: string } | null;
+    return_number: string;
+    return_date: string | null;
+    reason: string | null;
+    /** Computed server-side from the original sale's prices. */
+    total_amount: string;
+    refund_method: string | null;
+    status: SalesReturnStatus;
+    details_count?: number;
+    details?: SalesReturnDetail[];
+    created_at: string | null;
+}
+
+export interface SalesReturnFilters {
+    search: string;
+    status: SalesReturnStatus | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/* Shifts */
+
+export type ShiftStatus = 'open' | 'closed';
+
+export interface Shift {
+    id: string;
+    register_id: string;
+    register?: { id: string; name: string } | null;
+    user_id: string;
+    user?: { id: string; name: string } | null;
+    opening_balance: string;
+    closing_balance: string | null;
+    opened_at: string | null;
+    closed_at: string | null;
+    status: ShiftStatus;
+    notes: string | null;
+}
+
+/**
+ * Till figures for a shift. Computed rather than stored, so they arrive alongside
+ * the shift rather than on it.
+ */
+export interface ShiftReconciliation {
+    opening_balance: number;
+    cash_taken: number;
+    other_taken: number;
+    expected_cash: number;
+    counted_cash: number | null;
+    /** Positive means the drawer is over, negative means it is short. Null until counted. */
+    variance: number | null;
+    sales_count: number;
+}
+
+/* Terminal profiles */
+
+export interface PosProfile {
+    id: string;
+    company_id: string;
+    company?: { id: string; name: string } | null;
+    name: string;
+    code: string | null;
+    picking_mode: PickingMode;
+    order_types: OrderType[];
+    default_order_type: OrderType | null;
+    quick_tender: number[] | null;
+    require_customer: boolean;
+    allow_held_orders: boolean;
+    allow_negative_stock: boolean;
+    is_default: boolean;
+    status: 'active' | 'inactive';
+    registers_count?: number;
+    created_at: string | null;
+    updated_at: string | null;
+}
+
+export interface PosProfileFilters {
+    search: string;
+    status: 'active' | 'inactive' | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/**
+ * The effective terminal config, always fully populated — an unconfigured register
+ * still resolves to workable defaults rather than to nothing.
+ */
+export interface PosProfileConfig {
+    id: string | null;
+    name: string;
+    picking_mode: PickingMode;
+    order_types: OrderType[];
+    default_order_type: OrderType;
+    quick_tender: number[];
+    require_customer: boolean;
+    allow_held_orders: boolean;
+    allow_negative_stock: boolean;
+}
+
+/** A product as the till sees it: what it costs, what tax it carries, what is left. */
+export interface PosProduct {
+    id: string;
+    name: string;
+    sku: string | null;
+    category_id: string | null;
+    unit_price: string;
+    unit_id: string | null;
+    unit_name: string | null;
+    tax_rate: string | null;
+    tax_inclusive: boolean;
+    /** Null when no warehouse was named, which reads as "not counted" rather than zero. */
+    stock_on_hand: string | null;
+    is_combo: boolean;
+    /** Whether tapping this must open the configurator rather than go straight to the cart. */
+    needs_configuration: boolean;
+    product_variant_id?: string | null;
+    variant_name?: string | null;
+}
+
+/**
+ * The company's capability switches, as the terminal consumes them. These are the
+ * feature-control flags in the shape the till needs — what to show, not the dotted
+ * storage keys. Toggling them on the control page reshapes the terminal.
+ */
+export interface PosFlags {
+    modifiers_enabled: boolean;
+    combos_enabled: boolean;
+    allow_price_override: boolean;
+    allow_line_discount: boolean;
+    show_stock: boolean;
+}
+
+export interface PosContext {
+    register: { id: string; name: string; branch_id: string; branch: { id: string; name: string } | null } | null;
+    /** The warehouse the sale will draw from — what the tiles' stock counts refer to. */
+    warehouse_id: string | null;
+    profile: PosProfileConfig;
+    flags: PosFlags;
+    shift: Shift | null;
+    registers: { id: string; name: string; branch_id: string }[];
+    payment_methods: { id: string; name: string; type: string | null }[];
+    categories: { id: string; name: string }[];
+}
+
+/** A cart line, held in client state until the sale is sent. */
+export interface CartLine {
+    uid: string;
+    product_id: string;
+    product_variant_id: string | null;
+    unit_id: string | null;
+    name: string;
+    quantity: string;
+    unit_price: string;
+    discount_amount: string;
+    tax_rate: string | null;
+    tax_inclusive: boolean;
+    stock_on_hand: string | null;
+    /** Choices made against this line. Only the ids are sent; the server prices them. */
+    modifiers: CartModifier[];
+    /** Which product fills each combo slot. Empty for a plain product. */
+    components: CartComponent[];
+}
+
+export interface CartModifier {
+    option_id: string;
+    group_id: string;
+    group_name: string;
+    name: string;
+    price_delta: string;
+}
+
+export interface CartComponent {
+    slot_option_id: string;
+    slot_id: string;
+    slot_name: string;
+    name: string;
+    price_delta: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Feature controls, modifiers and combos                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A company capability switch. Distinct from module permissions (who may open a
+ * page) and from POS profiles (how one till behaves).
+ */
+export interface FeatureFlag {
+    key: string;
+    value: boolean;
+    label: string;
+    description: string;
+    group: string;
+    default: boolean;
+}
+
+export interface FeatureControls {
+    company_id: string | null;
+    flags: FeatureFlag[];
+    companies: { id: string; name: string }[];
+}
+
+export type ModifierSelectionType = 'single' | 'multiple';
+
+export interface ModifierOption {
+    id: string;
+    name: string;
+    price_delta: string;
+    /** When set, choosing this option deducts that product's stock. */
+    product_id: string | null;
+    is_default: boolean;
+    sort_order: number;
+}
+
+export interface ModifierGroup {
+    id: string;
+    company_id: string;
+    name: string;
+    selection_type: ModifierSelectionType;
+    is_required: boolean;
+    min_select: number;
+    max_select: number | null;
+    /** The bounds the server actually enforces, after the single/required rules. */
+    effective_min: number;
+    effective_max: number | null;
+    sort_order: number;
+    status: 'active' | 'inactive';
+    options_count?: number;
+    products_count?: number;
+    options?: ModifierOption[];
+    product_ids?: string[];
+    created_at: string | null;
+}
+
+export interface ModifierGroupFilters {
+    search: string;
+    status: 'active' | 'inactive' | 'all';
+    sort: string;
+    direction: SortDirection;
+    page: number;
+}
+
+/** Draft option row for the modifier group sheet. */
+export interface ModifierOptionDraft {
+    key: string;
+    id: string | null;
+    name: string;
+    price_delta: string;
+    product_id: string | null;
+    is_default: boolean;
+}
+
+export interface ComboSlotOption {
+    id: string;
+    product_id: string;
+    product_name: string | null;
+    price_delta: string;
+    is_default: boolean;
+}
+
+export interface ComboSlot {
+    id: string;
+    name: string;
+    quantity: string;
+    /** When false the slot is fixed and the terminal offers no choice. */
+    is_swappable: boolean;
+    sort_order: number;
+    options: ComboSlotOption[];
+}
+
+/** Draft slot for the product page's combo editor. */
+export interface ComboSlotDraft {
+    key: string;
+    name: string;
+    quantity: string;
+    is_swappable: boolean;
+    options: { key: string; product_id: string; price_delta: string; is_default: boolean }[];
+}
+
+/** What the terminal needs to configure one product. */
+export interface PosConfiguration {
+    product_id: string;
+    is_combo: boolean;
+    groups: {
+        id: string;
+        name: string;
+        selection_type: ModifierSelectionType;
+        is_required: boolean;
+        min_select: number;
+        max_select: number | null;
+        options: { id: string; name: string; price_delta: string; is_default: boolean }[];
+    }[];
+    slots: {
+        id: string;
+        name: string;
+        quantity: string;
+        is_swappable: boolean;
+        options: { id: string; product_id: string; name: string; price_delta: string; is_default: boolean }[];
+    }[];
 }

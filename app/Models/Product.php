@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -31,6 +32,7 @@ class Product extends Model
         'selling_price',
         'reorder_level',
         'is_active',
+        'is_combo',
     ];
 
     /**
@@ -45,6 +47,7 @@ class Product extends Model
             'selling_price' => 'decimal:2',
             'reorder_level' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_combo' => 'boolean',
         ];
     }
 
@@ -116,5 +119,40 @@ class Product extends Model
     public function barcodes(): HasMany
     {
         return $this->hasMany(ProductBarcode::class);
+    }
+
+    /**
+     * Stock levels for this product across warehouses.
+     *
+     * Constrain by warehouse when eager loading — the POS grid does, so it can show
+     * on-hand counts without a query per tile.
+     *
+     * @return HasMany<InventoryBalance, $this>
+     */
+    public function balances(): HasMany
+    {
+        return $this->hasMany(InventoryBalance::class);
+    }
+
+    /**
+     * Choice groups offered against this product at the till.
+     *
+     * @return BelongsToMany<ModifierGroup, $this>
+     */
+    public function modifierGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(ModifierGroup::class, 'product_modifier_groups')
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
+    }
+
+    /**
+     * The component positions of this product, when it is a combo. Empty otherwise.
+     *
+     * @return HasMany<ComboSlot, $this>
+     */
+    public function comboSlots(): HasMany
+    {
+        return $this->hasMany(ComboSlot::class)->orderBy('sort_order');
     }
 }
